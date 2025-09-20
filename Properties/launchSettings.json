@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Cointero": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
