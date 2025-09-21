@@ -264,7 +264,7 @@ namespace Cointero
                         Console.WriteLine("  ManufacturerName:" + cGigEDeviceInfo.chManufacturerName );
                         Console.WriteLine("  Sn:" + cGigEDeviceInfo.chSerialNumber );
                         /*
-                         * System.ArgumentException: ''GB2312' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method. (Parameter 'name')'
+                         * System.ArgumentException: ''GB2312' is not a supported encoding Name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method. (Parameter 'Name')'
                         */
                         var stringBuilder = new StringBuilder();
                         for (int j=0; j<6; j++)
