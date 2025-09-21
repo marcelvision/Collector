@@ -12,11 +12,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Timers;
 using System.Xml.Linq;
-using static Cointero.Main;
+using static Cointero.FormMain;
 
 namespace Cointero
 {
-	public partial class Main : Form
+	public partial class FormMain : Form
 	{
 		#region Initial Deffinitions
 
@@ -135,7 +135,7 @@ namespace Cointero
 
 		#region Main Form
 
-		public Main()
+		public FormMain()
 		{
 			AllocConsole();
 			InitializeComponent();
@@ -318,12 +318,12 @@ namespace Cointero
 
 
 					imp_results = coin.name.Replace("-", "");
-					Main.SendResultsN(imp_results);
+					FormMain.SendResultsN(imp_results);
 					stop_tc = true;
 				}
 				catch (Exception improcErr)
 				{
-					Main.SendResultsN("NON000000000N12345678R999");
+					FormMain.SendResultsN("NON000000000N12345678R999");
 					WriteDebug(" error: " + improcErr.Message);
 					stop_tc = true;
 				}
@@ -697,7 +697,7 @@ namespace Cointero
 					pictureBox3.Image = CamGrab.m_Bitmap2ShowT;
 
 				}
-				Main.SendResultsN("NON000000000N12345678R999");
+				FormMain.SendResultsN("NON000000000N12345678R999");
 
 			}
 			catch (Exception imgdispErr)
@@ -890,6 +890,7 @@ namespace Cointero
 					score_array1[i] = score1;
 					angle_array1[i] = angle1;
 					location_array1[i] = location1;
+					WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle: " + angle1.ToString() + " Score: " + score1.ToString());
 
 					// check side 2 matching models
 					// res_cutRot = iP4.mCutRotateImage(imageResModel[i], 2, Rs[i], Xs[i], Ys[i], out float score2, out float angle2, out Point location2);
@@ -897,8 +898,6 @@ namespace Cointero
 					score_array2[i] = score2;
 					angle_array2[i] = angle2;
 					location_array2[i] = location2;
-
-					WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle: " + angle1.ToString() + " Score: " + score1.ToString());
 					WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle2: " + angle2.ToString() + " Score2: " + score2.ToString());
 
 					Point location_detail = location_array1[i];
@@ -1371,6 +1370,7 @@ namespace Cointero
 				ip4res = iP4.mGetFileImages(imageFilePathModels[0], this.imageFilePathsSide1[0], this.imageFilePathsSide2[0], this.imageFilePathsEdges[0]);
 			else
 				ip4res = iP4.mGetCameraImages(imageFilePathModels[0], CamGrab.m_Bitmap2ShowF, CamGrab.m_Bitmap2ShowB, CamGrab.m_Bitmap2ShowT);
+			takeImageFromFile = false;
 			ImageProc._image_models_array_set = imageModelsArraySet;
 			int result_s1 = iP4.mCircleHough(1, radius_min, radius_max, out float Xs1, out float Ys1, out float Rs1);
 			int result_s2 = iP4.mCircleHough(2, radius_min, radius_max, out float Xs2, out float Ys2, out float Rs2);

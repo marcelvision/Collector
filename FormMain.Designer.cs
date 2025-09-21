@@ -1,6 +1,6 @@
 ﻿namespace Cointero
 {
-    partial class Main
+    partial class FormMain
     {
         /// <summary>
         ///  Required designer variable.
@@ -182,7 +182,7 @@
 			textBoxFileName.Text = "---";
 			textBoxFileName.TextAlign = HorizontalAlignment.Center;
 			// 
-			// Main
+			// FormMain
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;

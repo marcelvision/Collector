@@ -334,16 +334,16 @@ namespace Cointero
                             CamGrab.bmpReadyB = false;
                             CamGrab.bmpReadyT = false;
                             eStatus = operationMODE;
-                            Main.SendCommand(eStatus, 'M');
+                            FormMain.SendCommand(eStatus, 'M');
 							//FormMain.StartFirstTc();
 		                    CounterCOMPacket++ ;
-		                    Main.StartTCI();
+		                    FormMain.StartTCI();
                         }
                         else
                         {
                             tmpmessage = "TrigIgnored";
                             eStatus = operationMODE;
-                            Main.SendCommand(eStatus, 'X');
+                            FormMain.SendCommand(eStatus, 'X');
                         }
                         break;
 
@@ -351,33 +351,33 @@ namespace Cointero
                         operationMODE = 2;
                         eStatus = 16;
                         eStatus = operationMODE;
-                        Main.SendCommand(eStatus, 'T');
+                        FormMain.SendCommand(eStatus, 'T');
                         tmpmessage = "Accepting";
                         break;
                     case 'R':
                         operationMODE = 3;
                         eStatus = 0;
                         eStatus = operationMODE;
-                        Main.SendCommand(eStatus, 'R');
+                        FormMain.SendCommand(eStatus, 'R');
                         tmpmessage = "Rejecting";
                         break;
                     case 'P':
                         operationMODE = 0;
                         eStatus = 16;
                         eStatus = operationMODE;
-                        Main.SendCommand(eStatus, 'P');
-                        Main.StopTc();
+                        FormMain.SendCommand(eStatus, 'P');
+                        FormMain.StopTc();
                         tmpmessage = "Stopping";
                         break;
                     case 'O':
                         tmpmessage = "Received status OK";
                         eStatus = operationMODE;
-                        Main.SendCommand(eStatus, 'P');
+                        FormMain.SendCommand(eStatus, 'P');
                         break;
                     default:
                         operationMODE = 0;
                         // need to be checked
-                        Main.StopTc();
+                        FormMain.StopTc();
                         break;
                 }
                 Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + "IFC->VPC port: " + tmpmessage);
@@ -386,7 +386,7 @@ namespace Cointero
             }
             else
             {
-                Main.SendResultsN("NON000000000N12345678R999");
+                FormMain.SendResultsN("NON000000000N12345678R999");
                 Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + "IFC port: Start pattern not identified...");
                 log.Error("IFC port: Start byte not identified...");
             }
