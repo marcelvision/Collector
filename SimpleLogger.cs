@@ -66,7 +66,7 @@ namespace Cointero
         /// <summary>
         /// Log a DEBUG message
         /// </summary>
-        /// <param name="text">Message</param>
+        /// <param NameForm="text">Message</param>
         public void Debug(string text)
         {
             WriteFormattedLog(LogLevel.DEBUG, text);
@@ -75,7 +75,7 @@ namespace Cointero
         /// <summary>
         /// Log an ERROR message
         /// </summary>
-        /// <param name="text">Message</param>
+        /// <param NameForm="text">Message</param>
         public void Error(string text)
         {
             WriteFormattedLog(LogLevel.ERROR, text);
@@ -84,7 +84,7 @@ namespace Cointero
         /// <summary>
         /// Log a FATAL ERROR message
         /// </summary>
-        /// <param name="text">Message</param>
+        /// <param NameForm="text">Message</param>
         public void Fatal(string text)
         {
             WriteFormattedLog(LogLevel.FATAL, text);
@@ -93,7 +93,7 @@ namespace Cointero
         /// <summary>
         /// Log an INFO message
         /// </summary>
-        /// <param name="text">Message</param>
+        /// <param NameForm="text">Message</param>
         public void Info(string text)
         {
             WriteFormattedLog(LogLevel.INFO, text);
@@ -102,7 +102,7 @@ namespace Cointero
         /// <summary>
         /// Log a TRACE message
         /// </summary>
-        /// <param name="text">Message</param>
+        /// <param NameForm="text">Message</param>
         public void Trace(string text)
         {
             WriteFormattedLog(LogLevel.TRACE, text);
@@ -111,7 +111,7 @@ namespace Cointero
         /// <summary>
         /// Log a WARNING message
         /// </summary>
-        /// <param name="text">Message</param>
+        /// <param NameForm="text">Message</param>
         public void Warning(string text)
         {
             WriteFormattedLog(LogLevel.WARNING, text);

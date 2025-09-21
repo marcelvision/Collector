@@ -274,12 +274,12 @@ namespace Cointero
             {
                 if (selectedCoinName.Length > 0)
                 {
-                    // if coin name directory does not exist , create it
+                    // if coin NameForm directory does not exist , create it
                     if (!Directory.Exists(MODEL_IMAGES_DIRECTORY + selectedCoinName))
                     {
                         Directory.CreateDirectory(MODEL_IMAGES_DIRECTORY + selectedCoinName);
                     }
-                    // if coin name directory exist create subdirectory
+                    // if coin NameForm directory exist create subdirectory
                     if (Directory.Exists(MODEL_IMAGES_DIRECTORY + selectedCoinName))
                     {
                         Directory.CreateDirectory(MODEL_IMAGES_DIRECTORY + selectedCoinName + "\\Edges");
