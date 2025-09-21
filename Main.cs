@@ -25,12 +25,13 @@ namespace Cointero
 		[return: MarshalAs(UnmanagedType.Bool)]
 		private static extern bool AllocConsole();
 
+
 		//Optional: Import to attach to the parent process console if it exists
 		//[DllImport("kernel32.dll")]
 		//private static extern bool AttachConsole(int dwProcessId);
 		//private const int ATTACH_PARENT_PROCESS = -1;
 
-		new FormName Name = new FormName();
+		FormName name = new FormName();
 
 		string VERSION = "Cointero 0.1";
 		string workingDirPath = "D:\\COINTER\\Images\\TrainUnsorted";
@@ -74,7 +75,6 @@ namespace Cointero
 		int counterNG = 0;
 		int counterOK = 0;
 		int HidenHeartBeat = 0;
-		bool takeImageFromFile = false;
 
 		public struct Coin
 		{
@@ -234,11 +234,8 @@ namespace Cointero
 			WriteDebug("simulation of image index " + imageIndex.ToString());
 			ShowNextImage(imageIndex);
 			ShowFileName();
-			takeImageFromFile = true;
-			DecodeFromCamera();
+			DecodeFromFile();
 			System.Threading.Thread.Sleep(Settings.SettingsItems.SLPT);
-			counterNG = 0;
-			counterOK = 0;
 
 		}
 
@@ -391,10 +388,6 @@ namespace Cointero
 					Invoke((System.Windows.Forms.MethodInvoker)(() => this.button3.BackColor = System.Drawing.Color.Yellow));
 				else if (PortDataReceived.operationMODE == 1)
 					Invoke((System.Windows.Forms.MethodInvoker)(() => this.button3.BackColor = System.Drawing.Color.Green));
-				else if (PortDataReceived.operationMODE == 0)
-					Invoke((System.Windows.Forms.MethodInvoker)(() => this.button3.BackColor = System.Drawing.Color.Gray));
-				else if (PortDataReceived.operationMODE == 3)
-					Invoke((System.Windows.Forms.MethodInvoker)(() => this.button3.BackColor = System.Drawing.Color.Red));
 				else if (CamGrab.m_bGrabbing)
 					Invoke((System.Windows.Forms.MethodInvoker)(() => this.button3.BackColor = System.Drawing.Color.LightBlue));
 			}
@@ -404,10 +397,6 @@ namespace Cointero
 					button3.BackColor = Color.Yellow;
 				else if (PortDataReceived.operationMODE == 1)
 					button3.BackColor = Color.Green;
-				else if (PortDataReceived.operationMODE == 0)
-					button3.BackColor = Color.Gray;
-				else if (PortDataReceived.operationMODE == 3)
-					button3.BackColor = Color.Red;
 				else if (CamGrab.m_bGrabbing)
 					button3.BackColor = Color.LightBlue;
 
@@ -438,7 +427,7 @@ namespace Cointero
 					this.button1.BackColor = System.Drawing.Color.Green;
 				else this.button1.BackColor = System.Drawing.Color.Red;
 			}
-			// refresh coin Name textbox
+			// refresh coin name textbox
 			if (this.textBoxCoinName.InvokeRequired)
 				Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.Text = coin.name));
 			else
@@ -510,25 +499,25 @@ namespace Cointero
                 //this.textBoxCameraCounters.BackColor = System.Drawing.Color.Green;
             }
 
-            //refresh file Name textbox
+            //refresh file name textbox
             if (this.textBoxFileName.InvokeRequired)
             {
-                if (s.isRunMode()) Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxFileName.Text = Name.GetCoinName()));
+                if (s.isRunMode()) Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxFileName.Text = name.GetCoinName()));
                 else Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxFileName.Text = imageFileName));
                 //Invoke((MethodInvoker)(() => this.textBoxCameraCounters.BackColor = System.Drawing.Color.Green));
             }
             else
             {
-                if (s.isRunMode()) this.textBoxFileName.Text = Name.GetCoinName();
+                if (s.isRunMode()) this.textBoxFileName.Text = name.GetCoinName();
                 else this.textBoxFileName.Text = imageFileName;
                 //this.textBoxCameraCounters.BackColor = System.Drawing.Color.Green;
             }
 
-            //refresh coin Name textbox
+            //refresh coin name textbox
             if (this.textBoxCoinName.InvokeRequired)
-                Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.Text = coin.Name));
+                Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.Text = coin.name));
             else
-                this.textBoxCoinName.Text = coin.Name;
+                this.textBoxCoinName.Text = coin.name;
 
             if (this.textBox2.InvokeRequired)
                 Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBox2.Text = coin.score));
@@ -710,17 +699,17 @@ namespace Cointero
 		#region images saving		
         public void saveImages()
         {
-            // build coin Name            
+            // build coin name            
             StringBuilder pathname_builder = new StringBuilder();
             pathname_builder.Append(FormName.MODELSDIRECTORY);
             pathname_builder.Replace("Images\\ModelsN", "SavedImages");
-            pathname_builder.Append(Name.GetCoinName());
+            pathname_builder.Append(name.GetCoinName());
 
             string[] path_nameParts = pathname_builder.ToString().Split(new string[] { "_" }, StringSplitOptions.None);
 
             string path_name = pathname_builder.ToString();
 
-            if (Name.autoFillUp)
+            if (name.autoFillUp)
             {
                 CultureInfo ci = CultureInfo.CurrentCulture;
                 path_nameParts[3] = PortDataReceived.parSA[3].ToString("D4", ci);
@@ -753,7 +742,7 @@ namespace Cointero
 
                     path_nameParts[0].Substring(path_nameParts[0].Length - 3, path_nameParts[0].Length);
                     string coin_name = string.Join("_", path_nameParts);
-                    Name.SetCoinName(coin_name);
+                    name.SetCoinName(coin_name);
                 }
                 catch (Exception saveErr)
                 {
@@ -773,6 +762,7 @@ namespace Cointero
 		#region image processing
 		public void imageProcessing()
 		{
+
 			WriteDebug("start");
 			if (CamGrab.m_Bitmap2ShowB != null && CamGrab.m_Bitmap2ShowF != null && CamGrab.m_Bitmap2ShowT != null)
 			{
@@ -1103,7 +1093,6 @@ namespace Cointero
 			}
 
 			// THICKNESS check top edge coin thickness and colour
-			/*
 			try
 			{
 				iP4.mFitLine();
@@ -1112,7 +1101,6 @@ namespace Cointero
 			{
 				WriteDebug(eFitline1.Message);
 			}
-			*/
 
 			WriteDebug("start Find circle on model");
 
@@ -1120,7 +1108,7 @@ namespace Cointero
 			int radius_max = 1;
 
 
-			// Get diameter parameter of side1 from file Name 
+			// Get diameter parameter of side1 from file name 
 			string coinIDfromFile = "";
 			int side1Diemeters = 0;
 			int side2Diemeters = 0;
@@ -1173,7 +1161,7 @@ namespace Cointero
 
 			// !!! MMM
 			// replacing camera diameter with sensor diameter (when from camera)
-			// replacing camera diameter with file Name diameter (when from files)
+			// replacing camera diameter with file name diameter (when from files)
 			float Rs1_disp = Rs1;
 			Rs1 = ((side1Diemeters * 148 / 1000) / 2);
 			Rs2 = ((side1Diemeters * 148 / 1000) / 2);
@@ -1207,7 +1195,7 @@ namespace Cointero
 				//WriteDebug("Result --2-- 2nd attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
 				counterNG++;
 				// mmm
-				//Name.SetCoinName("Coin not decoded.");  // !!! MM !!! no threshold aplied for 2nd attempt , counting as NG for now
+				//name.SetCoinName("Coin not decoded.");  // !!! MM !!! no threshold aplied for 2nd attempt , counting as NG for now
 			}
 			else
 			{
@@ -1288,33 +1276,28 @@ namespace Cointero
 
 		private void DecodeFromCamera()
 		{
-			/* mmm this should net be needed here 
+			/* mmm to remove
 			string imageSide1Path = this.imageFilePathsSide1[imageIndex];
 			string imageSide2Path = this.imageFilePathsSide2[imageIndex];
 			string imageEdgesPath = this.imageFilePathsEdges[imageIndex];
 			*/
 
 			// if image not present at camera return from this method
-			/* mmm this should net be needed here
-			 * WriteDebug("start");
+			WriteDebug("start");
 			if (CamGrab.m_Bitmap2ShowB == null || CamGrab.m_Bitmap2ShowF == null || CamGrab.m_Bitmap2ShowT == null)
 			{
 				WriteDebug("err: one of images is null ");
 				return;
 			}
-			*/
 
 			DateTime start = DateTime.Now;
 			// Initialise image proessing
-			iP4 = new ImageProc();
-			/*
 			iP4 = new ImageProc(imageFilePathModels[0], CamGrab.m_Bitmap2ShowF, CamGrab.m_Bitmap2ShowB, CamGrab.m_Bitmap2ShowT);
 			if (iP4.imagesNotRead == true)
 			{
 				WriteDebug("err: ImageProc init failed ");
 				return;
 			}
-			*/
 
 			// Load MODELS if they are not loaded yet
 			// 1. Load models if not yet loaded
@@ -1325,8 +1308,8 @@ namespace Cointero
 				LoadModels();
 			}
 
-			// check top edge coin thickness and colour			
-            /*
+			// check top edge coin thickness and colour
+			/*
             try
             {
                 iP4.mFitLine();
@@ -1335,12 +1318,12 @@ namespace Cointero
             {
                 WriteDebug(eFitline1.Message);
             }            
-			*/
+            */
 
 			int radius_min = 1;
 			int radius_max = 1;
 
-			// Get diameter parameter of side1 from file Name 
+			// Get diameter parameter of side1 from file name 
 			int side1Diemeters = PortDataReceived.parSA[3];
 			int side2Diemeters = PortDataReceived.parSA[3];
 			int liveMag1 = PortDataReceived.parSA[0];
@@ -1363,19 +1346,13 @@ namespace Cointero
 				radius_max = (int)(((side1Diemeters + Settings.SettingsItems.RADT * MULTIPLE_FOR_LARGE_COINS) * 148 / 1000) / 2);
 			else
 				radius_max = (int)(((side1Diemeters + 4 + Settings.SettingsItems.RADT) * 148 / 1000) / 2);
-			int ip4res = 0;
 
-			// load images into image processing class from files or from camera bitmaps
-			if (takeImageFromFile == true)
-				ip4res = iP4.mGetFileImages(imageFilePathModels[0], this.imageFilePathsSide1[0], this.imageFilePathsSide2[0], this.imageFilePathsEdges[0]);
-			else
-				ip4res = iP4.mGetCameraImages(imageFilePathModels[0], CamGrab.m_Bitmap2ShowF, CamGrab.m_Bitmap2ShowB, CamGrab.m_Bitmap2ShowT);
 			ImageProc._image_models_array_set = imageModelsArraySet;
 			int result_s1 = iP4.mCircleHough(1, radius_min, radius_max, out float Xs1, out float Ys1, out float Rs1);
 			int result_s2 = iP4.mCircleHough(2, radius_min, radius_max, out float Xs2, out float Ys2, out float Rs2);
 			
 			// replacing camera diameter with sensor diameter (when from camera)
-			// replacing camera diameter with file Name diameter (when from files)
+			// replacing camera diameter with file name diameter (when from files)
 			float Rs1_disp = Rs1;
 			Rs1 = ((side1Diemeters * 148 / 1000) / 2);
 			Rs2 = ((side1Diemeters * 148 / 1000) / 2);
@@ -1405,14 +1382,14 @@ namespace Cointero
 				//    out modelNameOK, out scoreOK, out angleOK, out toleranceOut_max, out non0_score_elements);
 				//WriteDebug("Result --- 222 --- 2nd attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
 				counterNG++;				
-				Name.SetCoinName("Coin not decoded.");				
+				name.SetCoinName("Coin not decoded.");				
 				// mmm
 				//saveImages();
 			}
 			else
 			{
 				WriteDebug("Result --- 111 --- 1st attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
-				Name.SetCoinName(modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
+				name.SetCoinName(modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
 				counterOK++;
 			}
 
@@ -1484,9 +1461,9 @@ namespace Cointero
 						CamGrab.IcountF.ToString() + "," + CamGrab.IcountT.ToString() + "," + CamGrab.IcountB.ToString() + ","      // Camera frame counters 
 						+ coin.time + "," + coin.score + "," + coin.angle + ","                                                     // Coin parameters from Coindetection
 						+ non0_score_elements.ToString() + "," + toleranceOut_max.ToString() + ","                                  // how many models were considered / which of the dia-mag parameters passed 
-						+ _coinName[0] + "," + _coinName[1] + "," + _coinName[2] + "," + Rs1_disp.ToString() + ","                  // detected coin Name split + radius
-						+ mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","          // detected coin Name split magnetic parameters
-						+ "Cam" + "," + "0" + "," + "0N00000000R000" + "," + Rs1.ToString() + ","                                   // Parameters detected from the file Name in simul mode  + radius in pixels
+						+ _coinName[0] + "," + _coinName[1] + "," + _coinName[2] + "," + Rs1_disp.ToString() + ","                  // detected coin name split + radius
+						+ mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","          // detected coin name split magnetic parameters
+						+ "Cam" + "," + "0" + "," + "0N00000000R000" + "," + Rs1.ToString() + ","                                   // Parameters detected from the file name in simul mode  + radius in pixels
 						+ liveRadius.ToString() + "," + liveMag1.ToString() + "," + liveMag2.ToString() + "," + liveMag3.ToString() + "," // magnetic parameters from the sensor after calibration
 						+ origRadius.ToString() + "," + origMag1.ToString() + "," + origMag2.ToString() + "," + origMag3.ToString()); // magnetic parameters from the sensor original
 				}
@@ -1496,9 +1473,9 @@ namespace Cointero
 						CamGrab.IcountF.ToString() + "," + CamGrab.IcountT.ToString() + "," + CamGrab.IcountB.ToString() + ","      // Camera frame counters 
 						+ coin.time + "," + coin.score + "," + coin.angle + ","                                                     // Coin parameters from Coindetection
 						+ non0_score_elements.ToString() + "," + toleranceOut_max.ToString() + ","                                  // how many models were considered / which of the dia-mag parameters passed 
-						+ "CaM" + "," + "0" + "," + "0N00000000R000" + "," + Rs1_disp.ToString() + ","                  // detected coin Name split + radius
-						+ mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","          // detected coin Name split magnetic parameters
-						+ "CaM" + "," + "0" + "," + "0N00000000R000" + "," + Rs1.ToString() + ","                                   // Parameters detected from the file Name in simul mode  + radius in pixels
+						+ "CaM" + "," + "0" + "," + "0N00000000R000" + "," + Rs1_disp.ToString() + ","                  // detected coin name split + radius
+						+ mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","          // detected coin name split magnetic parameters
+						+ "CaM" + "," + "0" + "," + "0N00000000R000" + "," + Rs1.ToString() + ","                                   // Parameters detected from the file name in simul mode  + radius in pixels
 						+ liveRadius.ToString() + "," + liveMag1.ToString() + "," + liveMag2.ToString() + "," + liveMag3.ToString() + "," // magnetic parameters from the sensor after calibration
 						+ origRadius.ToString() + "," + origMag1.ToString() + "," + origMag2.ToString() + "," + origMag3.ToString()); // magnetic parameters from the sensor original
 				}
@@ -1589,7 +1566,7 @@ namespace Cointero
 			}
 		}
 
-		// get actual image file Name, strip the path and load variable to be displaid in refresh
+		// get actual image file name, strip the path and load variable to be displaid in refresh
 		private void ShowFileName()
 		{
 			if (imageFilePathsSide1.Length >= imageIndex)
@@ -1656,7 +1633,7 @@ namespace Cointero
 				if (strModelName != "NON00000000A0N12345678R999")
 				{
 					string[] ModelNameSplited;
-					// set model Name if the curency is not NON                 
+					// set model name if the curency is not NON                 
 					if (indexOfNON == -1)
 					{
 						data[3] = (byte)65; // A - Accept
@@ -1739,11 +1716,11 @@ namespace Cointero
 		{
 			if (!s.isSaveMode())
 			{
-				// Pop up window to feel up fime Name                
+				// Pop up window to feel up fime name                
 				// FormName.CoinStruc coinStruc = new FormName.CoinStruc();
-				//Name.ShowDialog();
-				//textBoxFileName.Text = Name.GetCoinName();
-				//if (Name.GetSaveMode())
+				//name.ShowDialog();
+				//textBoxFileName.Text = name.GetCoinName();
+				//if (name.GetSaveMode())
 				//{
 
 				s.setSaveMode();
@@ -1754,7 +1731,7 @@ namespace Cointero
 			}
 			else
 			{
-				//Name.ClearSaveMode();
+				//name.ClearSaveMode();
 				s.setIdleMode();
 				button4.BackColor = Color.Gray;
 				textBoxFileName.Enabled = false;
@@ -1766,11 +1743,11 @@ namespace Cointero
 		{
 			if (!s.isSaveMode())
 			{
-				// Pop up window to feel up fime Name                
+				// Pop up window to feel up fime name                
 				//FormName.CoinStruc coinStruc = new FormName.CoinStruc();
-				Name.ShowDialog();
-				textBoxFileName.Text = Name.GetCoinName();
-				if (Name.GetSaveMode())
+				name.ShowDialog();
+				textBoxFileName.Text = name.GetCoinName();
+				if (name.GetSaveMode())
 				{
 					s.setSaveMode();
 					button5.BackColor = Color.Green;
@@ -1778,7 +1755,7 @@ namespace Cointero
 			}
 			else
 			{
-				//Name.ClearSaveMode();
+				//name.ClearSaveMode();
 				s.setIdleMode();
 				button5.BackColor = Color.Gray;
 			}

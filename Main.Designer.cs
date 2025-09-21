@@ -10,7 +10,7 @@
         /// <summary>
         ///  Clean up any resources being used.
         /// </summary>
-        /// <param Name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -141,7 +141,7 @@
 			button4.Name = "button4";
 			button4.Size = new Size(76, 22);
 			button4.TabIndex = 10;
-			button4.Text = "SAVE";
+			button4.Text = "X4";
 			button4.UseVisualStyleBackColor = true;
 			button4.Click += button4_Click;
 			// 
@@ -153,7 +153,7 @@
 			button5.Name = "button5";
 			button5.Size = new Size(76, 22);
 			button5.TabIndex = 9;
-			button5.Text = "M.NAME";
+			button5.Text = "X5";
 			button5.UseVisualStyleBackColor = true;
 			button5.Click += button5_Click;
 			// 
@@ -200,7 +200,7 @@
 			Controls.Add(pictureBox3);
 			Controls.Add(pictureBox2);
 			Controls.Add(pictureBox1);
-			Margin = new Padding(3, 2, 3, 2);			
+			Margin = new Padding(3, 2, 3, 2);
 			Name = "Main";
 			Text = "Cointero";
 			Load += Main_Load;
