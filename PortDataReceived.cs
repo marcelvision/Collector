@@ -24,8 +24,9 @@ namespace Cointero
         //private static SerialPort IFCport = new SerialPort("COM5", 115200);
         private static string dataInBuffer = "";
 
-        static string _indataIFCBuffer = "";
-        public static int[] parSA = new int[5]; //{ 123,345,678,900,0 };
+        public static int CounterCOMPacket = 0;
+		public static int CounterCOMReceived = 0;
+		public static int[] parSA = new int[5]; //{ 123,345,678,900,0 };
         public static int[] parSAorig = new int[5];
         public static char triggCounter = 'A';
         public static bool largeRadius = false; // when rdius is larger then limit in settings, all larger radiuses has to be involved 
@@ -138,8 +139,8 @@ namespace Cointero
             string datetimeFormat = "yyyy-MM-dd HH:mm:ss.fff ";
             SerialPort spIF = (SerialPort)senderIF;
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + "IFC COM: received, lenght: " + spIF.BytesToRead.ToString() + " B:" );
-
-            try
+			CounterCOMReceived++;
+			try
             {
                 if (dataInBuffer.Length == 0)
                     dataInBuffer = spIF.ReadExisting();
@@ -334,8 +335,9 @@ namespace Cointero
                             CamGrab.bmpReadyT = false;
                             eStatus = operationMODE;
                             Main.SendCommand(eStatus, 'M');
-                            //FormMain.StartFirstTc();
-                            Main.StartTCI();
+							//FormMain.StartFirstTc();
+		                    CounterCOMPacket++ ;
+		                    Main.StartTCI();
                         }
                         else
                         {
