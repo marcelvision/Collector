@@ -310,7 +310,7 @@ namespace Cointero
                 try
                 {
                     // mmm 
-                    //imageProcessing();
+                    imageProcessing();
 
 
                     imp_results = coin.name.Replace("-", "");
@@ -759,6 +759,46 @@ namespace Cointero
             }
         }
         */
+        #endregion
+
+        #region image processing
+        public void imageProcessing()
+        {
+
+            WriteDebug("start");
+            if (CamGrab.m_Bitmap2ShowB != null && CamGrab.m_Bitmap2ShowF != null && CamGrab.m_Bitmap2ShowT != null)
+            {
+                try
+                {
+                    pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
+                    pictureBox2.Image = CamGrab.m_Bitmap2ShowB;
+
+                    pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+                    pictureBox1.Image = CamGrab.m_Bitmap2ShowF;
+
+                    pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
+                    pictureBox3.Image = CamGrab.m_Bitmap2ShowT;
+
+                    WriteDebug("call DecodeFromCamera");
+                    DecodeFromCamera();
+                    WriteDebug("return from DecodeFromCamera");
+                }
+                catch (Exception eShow)
+                {
+                    WriteDebug(" m_Bitmap show. " + eShow.Message);
+                }
+                finally
+                {
+                    WriteDebug(" returning from imageProcessing");
+                }
+            }
+            else
+            {
+                WriteDebug("missing CamGrab image/s for DecodeFromCamera");
+            }
+            // run image processing side 1 in thread 1
+            // run image processing side 2 in thread 2
+        }
         #endregion
 
         #region Image Decoding
