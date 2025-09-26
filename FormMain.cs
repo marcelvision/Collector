@@ -263,7 +263,7 @@ namespace Cointero
 				imagesReady = false;
 				imagesNotReadyCounter++;
 
-				if (imagesNotReadyCounter > 50)
+				if (imagesNotReadyCounter > 200)
 				{
 					CamGrab.destroyGrabbers();
 					Thread.Sleep(1000);
@@ -441,11 +441,24 @@ namespace Cointero
 			}
 			// refresh coin NameForm textbox
 			if (this.textBoxCoinName.InvokeRequired)
+			{
 				Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.Text = coin.name));
-			else
-				this.textBoxCoinName.Text = coin.name;
+				if (coin.name == "ND")
+					Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.ForeColor = Color.Red));
+				else
+                    Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.ForeColor = Color.Green));
 
-			string separator = " - ";
+            }
+			else
+			{
+				this.textBoxCoinName.Text = coin.name;
+				if (coin.name == "ND")
+					this.textBoxCoinName.ForeColor = Color.Red;
+				else
+                    this.textBoxCoinName.ForeColor = Color.Green;
+            }
+
+            string separator = " - ";
 			HidenHeartBeat++;
 			if (HidenHeartBeat > 50) HidenHeartBeat = 0;
 			if (HidenHeartBeat > 46) separator = " = ";
@@ -530,7 +543,7 @@ namespace Cointero
                 Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.Text = coin.NameForm));
             else
                 this.textBoxCoinName.Text = coin.NameForm;
-
+			*/
             if (this.textBox2.InvokeRequired)
                 Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBox2.Text = coin.score));
             else
@@ -539,10 +552,7 @@ namespace Cointero
             if (this.textBox3.InvokeRequired)
                 Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBox3.Text = coin.time));
             else
-                this.textBox3.Text = coin.time;
-
-            */
-
+                this.textBox3.Text = coin.time;            
 
 			tcr.Start();
 
@@ -808,11 +818,59 @@ namespace Cointero
 			// run image processing side 1 in thread 1
 			// run image processing side 2 in thread 2
 		}
-		#endregion
+        #endregion
 
-		#region Image Decoding
+        #region Image Decoding
 
-		private void Decode(float dTolerance, float Rs1, float Xs1, float Xs2, float Ys1, float Ys2, int liveMag1, int liveMag2, int liveMag3,
+        private List<int> PreSelection(float dTolerance, float Rs1, int liveMag1, int liveMag2, int liveMag3, bool largeRadius)
+		{
+            List<int> listOfPreSelected = new List<int>();            
+
+            float mag1_tol = Settings.SettingsItems.MG1T * dTolerance;
+            float mag2_tol = Settings.SettingsItems.MG2T * dTolerance;
+            float mag3_tol = Settings.SettingsItems.MG3T * dTolerance;
+            float radius_tolerance = (((Settings.SettingsItems.RADT * 148 / 1000) / 2) * dTolerance);
+            int[] toleranceOut = new int[imageFilePathModels.Length];                        
+
+            for (int i = 0; i < Rs.Length; i++)
+            {
+                toleranceOut[i] = 0;
+
+                // if large radius is set, then involve all models with larger radius
+                if (largeRadius)
+                {                    
+                    if (Rs[i] + radius_tolerance > Rs1)
+                    {
+                        toleranceOut[i] += 1000;
+                    }
+                }
+                else
+                {
+                    // if large radius is not set, then involve only models with radius in tolerance
+                    if ((Rs[i] - radius_tolerance < Rs1) && (Rs1 < Rs[i] + radius_tolerance))
+                        toleranceOut[i] += 1000;
+                }
+
+                if ((liveMag1 < (modelMag1[i] + mag1_tol)) && (liveMag1 > (modelMag1[i] - mag1_tol)))
+                    toleranceOut[i] += 1;
+                if ((liveMag2 < (modelMag2[i] + mag2_tol)) && (liveMag2 > (modelMag2[i] - mag2_tol)))
+                    toleranceOut[i] += 10;
+                if ((liveMag3 < (modelMag3[i] + mag3_tol)) && (liveMag3 > (modelMag3[i] - mag3_tol)))
+                    toleranceOut[i] += 100;
+                //WriteDebug("Radius in " + (int)Rs1*2*1000/148 + "min " + (int)(Rs[i] - radius_tolerance) * 2 * 1000 / 148 + "max " + (int)(Rs[i] + radius_tolerance) * 2 * 1000 / 148);
+                // if diameter and magnetic params are in tolerance
+                // go to best model image search
+
+                if (toleranceOut[i] == 1111)
+                {
+                    listOfPreSelected.Add(i);
+                    
+                }    
+            }
+            return listOfPreSelected;
+        }
+
+        private void Decode(float dTolerance, List<int> listOfPreSelected, float Rs1, float Xs1, float Xs2, float Ys1, float Ys2, int liveMag1, int liveMag2, int liveMag3,
 		out string modelNameOK, out int scoreOK, out int angleOK, out int toleranceOut_max, out int non0_score_elements)
 		{
 			modelNameOK = "ND";
@@ -837,18 +895,31 @@ namespace Cointero
 			int[] toleranceOut = new int[imageFilePathModels.Length];
 			toleranceOut_max = 0;
 			double angle_found = 400;
-			List<int> listOfPreSelected = new List<int>();
+			//List<int> listOfPreSelected = new List<int>();
 			int index_max = -1;
 
 			for (int i = 0; i < Rs.Length; i++)
 			{
-				toleranceOut[i] = 0;
+				score_array1[i] = 0;
+				angle_array1[i] = 0;
+				location_array1[i] = new Point(0, 0);
+				score_array2[i] = 0;
+				angle_array2[i] = 0;
+				location_array2[i] = new Point(0, 0);
+				score_detail[i] = 0;
+			}
 
+            for (int k = 0; k < listOfPreSelected.Count; k++)
+			{
+				int i = listOfPreSelected[k];
+                toleranceOut[i] = 0;
+				
 				if (i == -1)
 				{
 					ImageProc.DEBUG = true;
 				}
 
+				/*
 				if (PortDataReceived.largeRadius)
 				{
 					// if large radius is set, then involve all models with larger radius
@@ -856,9 +927,9 @@ namespace Cointero
 					{
 						toleranceOut[i] += 1000;
 					}
-					/*if (((Rs[i] - (radius_tolerance * 3)) < Rs1) && (Rs1 < (Rs[i] + (radius_tolerance*3))))
-                        toleranceOut[i] += 1000;
-                    */
+					//if (((Rs[i] - (radius_tolerance * 3)) < Rs1) && (Rs1 < (Rs[i] + (radius_tolerance*3))))
+                    //    toleranceOut[i] += 1000;
+                    
 					//WriteDebug("large-coin detected" + radius_tolerance*3);
 				}
 				else
@@ -876,205 +947,191 @@ namespace Cointero
 					toleranceOut[i] += 100;
 
 
+				*/
 				//WriteDebug("Radius in " + (int)Rs1*2*1000/148 + "min " + (int)(Rs[i] - radius_tolerance) * 2 * 1000 / 148 + "max " + (int)(Rs[i] + radius_tolerance) * 2 * 1000 / 148);
 				// if diameter and magnetic params are in tolerance
 				// go to best model image search
-
-				if (toleranceOut[i] == 1111)
-				{
-					listOfPreSelected.Add(i);
+				
+				//if (toleranceOut[i] == 1111)
+				//{
+				//	listOfPreSelected.Add(i);
 					// check side 1 matching models
 					// int res_cutRot = iP4.mCutRotateImage(imageResModel[i], 1, Rs[i], Xs[i], Ys[i], out float score1, out float angle1, out Point location1);
 
-					int res_cutRot = iP4.mCompareImage(imageResModel[i], i, 1, Rs[i], Xs[i], Ys[i], out float score1, out float angle1, out Point location1);
-					score_array1[i] = score1;
-					angle_array1[i] = angle1;
-					location_array1[i] = location1;
-					WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle: " + angle1.ToString() + " Score: " + score1.ToString());
+				int res_cutRot = iP4.mCompareImage(imageResModel[i], i, 1, Rs[i], Xs[i], Ys[i], out float score1, out float angle1, out Point location1);
+				score_array1[i] = score1;
+				angle_array1[i] = angle1;
+				location_array1[i] = location1;
+				WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle: " + angle1.ToString() + " Score: " + score1.ToString());
 
-					// check side 2 matching models
-					// res_cutRot = iP4.mCutRotateImage(imageResModel[i], 2, Rs[i], Xs[i], Ys[i], out float score2, out float angle2, out Point location2);
-					res_cutRot = iP4.mCompareImage(imageResModel[i], i, 2, Rs[i], Xs[i], Ys[i], out float score2, out float angle2, out Point location2);
-					score_array2[i] = score2;
-					angle_array2[i] = angle2;
-					location_array2[i] = location2;
-					WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle2: " + angle2.ToString() + " Score2: " + score2.ToString());
+				// check side 2 matching models
+				// res_cutRot = iP4.mCutRotateImage(imageResModel[i], 2, Rs[i], Xs[i], Ys[i], out float score2, out float angle2, out Point location2);
+				res_cutRot = iP4.mCompareImage(imageResModel[i], i, 2, Rs[i], Xs[i], Ys[i], out float score2, out float angle2, out Point location2);
+				score_array2[i] = score2;
+				angle_array2[i] = angle2;
+				location_array2[i] = location2;
+				WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle2: " + angle2.ToString() + " Score2: " + score2.ToString());
 
-					Point location_detail = location_array1[i];
-					Point location_neg = location_array1[i];
+				Point location_detail = location_array1[i];
+				Point location_neg = location_array1[i];
 
-					float score_pattern = 0;
-					float score_pattern_sum = 0;
-					float score_pattern_ave = 0;
-					float score_neg = 0;
-					float score_neg_sum = 0;
-					float score_neg_ave = 0;
-					int selectedside;
-					if (score1 > score2)
+				float score_pattern = 0;
+				float score_pattern_sum = 0;
+				float score_pattern_ave = 0;
+				float score_neg = 0;
+				float score_neg_sum = 0;
+				float score_neg_ave = 0;
+				int selectedside;
+				if (score1 > score2)
+				{
+					selectedside = 1;
+					angle_found = angle1;
+					location_detail.X = (int)Xs1;
+					location_detail.Y = (int)Ys1;
+					location_neg.X = (int)Xs1;
+					location_neg.Y = (int)Ys1;
+				}
+				else
+				{
+					selectedside = 2;
+					angle_found = angle2;
+					location_detail.X = (int)Xs2;
+					location_detail.Y = (int)Ys2;
+					location_neg.X = (int)Xs2;
+					location_neg.Y = (int)Ys2;
+				}
+
+				// check side if detail model exist and match it
+				if (modelDetail[i])
+				{
+					string mustHaveImagePath = modelsDirPath + "\\" + modelName[i] + "\\Detail\\";
+					if (Directory.Exists(mustHaveImagePath))
 					{
-						selectedside = 1;
-						angle_found = angle1;
-						location_detail.X = (int)Xs1;
-						location_detail.Y = (int)Ys1;
-						location_neg.X = (int)Xs1;
-						location_neg.Y = (int)Ys1;
-					}
-					else
-					{
-						selectedside = 2;
-						angle_found = angle2;
-						location_detail.X = (int)Xs2;
-						location_detail.Y = (int)Ys2;
-						location_neg.X = (int)Xs2;
-						location_neg.Y = (int)Ys2;
-					}
-
-					// check side if detail model exist and match it
-					if (modelDetail[i])
-					{
-						string mustHaveImagePath = modelsDirPath + "\\" + modelName[i] + "\\Detail\\";
-						if (Directory.Exists(mustHaveImagePath))
+						string[] mustHaveImageNames = Directory.GetFiles(mustHaveImagePath);
+						if (mustHaveImageNames.Length > 0)
 						{
-							string[] mustHaveImageNames = Directory.GetFiles(mustHaveImagePath);
-							if (mustHaveImageNames.Length > 0)
+							int loopIndex = mustHaveImageNames.Length;
+							for (int j = 0; j < loopIndex; j++)
 							{
-								int loopIndex = mustHaveImageNames.Length;
-								for (int j = 0; j < loopIndex; j++)
-								{
-									//int result_p = iP4.mCircleHough(2, radius_min, radius_max, out float Xsp, out float Ysp, out float Rsp);
-									string[] mustHaveImageSplit = mustHaveImageNames[j].Split("_");
-									int mustHaveImageOffsetX = (int)(Convert.ToUInt32(mustHaveImageSplit[6]));
-									int mustHaveImageOffsetY = (int)(Convert.ToUInt32(mustHaveImageSplit[7]));
-									score_pattern = iP4.mFindSmallPattern(mustHaveImageNames[j], selectedside, location_detail, Rs1, angle_found, mustHaveImageOffsetX, mustHaveImageOffsetY);
-									score_pattern_sum = score_pattern_sum + score_pattern;
-									WriteDebug("ISO: " + modelName[i] + " Detail" + j.ToString() + ": " + score_pattern.ToString() + " at ["
-										+ mustHaveImageOffsetX.ToString() + "," + mustHaveImageOffsetY.ToString() + "]");
-								}
-								score_pattern_ave = score_pattern_sum / loopIndex;
-								score_detail[i] = score_pattern_ave;
-
+								//int result_p = iP4.mCircleHough(2, radius_min, radius_max, out float Xsp, out float Ysp, out float Rsp);
+								string[] mustHaveImageSplit = mustHaveImageNames[j].Split("_");
+								int mustHaveImageOffsetX = (int)(Convert.ToUInt32(mustHaveImageSplit[6]));
+								int mustHaveImageOffsetY = (int)(Convert.ToUInt32(mustHaveImageSplit[7]));
+								score_pattern = iP4.mFindSmallPattern(mustHaveImageNames[j], selectedside, location_detail, Rs1, angle_found, mustHaveImageOffsetX, mustHaveImageOffsetY);
+								score_pattern_sum = score_pattern_sum + score_pattern;
+								WriteDebug("ISO: " + modelName[i] + " Detail" + j.ToString() + ": " + score_pattern.ToString() + " at ["
+									+ mustHaveImageOffsetX.ToString() + "," + mustHaveImageOffsetY.ToString() + "]");
 							}
-							else score_detail[i] = 0;
+							score_pattern_ave = score_pattern_sum / loopIndex;
+							score_detail[i] = score_pattern_ave;
+
 						}
 						else score_detail[i] = 0;
 					}
 					else score_detail[i] = 0;
+				}
+				else score_detail[i] = 0;
 
-					// check side if detail model exist and match it
-					if (modelNegative[i])
+				// check side if detail model exist and match it
+				if (modelNegative[i])
+				{
+					string shuldNotHaveImagePath = modelsDirPath + "\\" + modelName[i] + "\\Negative\\";
+					if (Directory.Exists(shuldNotHaveImagePath))
 					{
-						string shuldNotHaveImagePath = modelsDirPath + "\\" + modelName[i] + "\\Negative\\";
-						if (Directory.Exists(shuldNotHaveImagePath))
+						string[] shuldNotHaveImageNames = Directory.GetFiles(shuldNotHaveImagePath);
+						if (shuldNotHaveImageNames.Length > 0)
 						{
-							string[] shuldNotHaveImageNames = Directory.GetFiles(shuldNotHaveImagePath);
-							if (shuldNotHaveImageNames.Length > 0)
+							int loopIndex = shuldNotHaveImageNames.Length;
+							for (int j = 0; j < loopIndex; j++)
 							{
-								int loopIndex = shuldNotHaveImageNames.Length;
-								for (int j = 0; j < loopIndex; j++)
-								{
-									//int result_p = iP4.mCircleHough(2, radius_min, radius_max, out float Xsp, out float Ysp, out float Rsp);
-									string[] shuldNotHaveImageSplit = shuldNotHaveImageNames[j].Split("_");
-									int imageOffsetX = (int)(Convert.ToUInt32(shuldNotHaveImageSplit[6]));
-									int imageOffsetY = (int)(Convert.ToUInt32(shuldNotHaveImageSplit[7]));
-									score_neg = iP4.mFindSmallPattern(shuldNotHaveImageNames[j], selectedside, location_neg, Rs1, angle_found, imageOffsetX, imageOffsetY);
-									score_neg_sum = score_neg_sum + score_neg;
-								}
-								score_neg_ave = score_neg_sum / loopIndex;
-								score_negative[i] = score_neg_ave;
+								//int result_p = iP4.mCircleHough(2, radius_min, radius_max, out float Xsp, out float Ysp, out float Rsp);
+								string[] shuldNotHaveImageSplit = shuldNotHaveImageNames[j].Split("_");
+								int imageOffsetX = (int)(Convert.ToUInt32(shuldNotHaveImageSplit[6]));
+								int imageOffsetY = (int)(Convert.ToUInt32(shuldNotHaveImageSplit[7]));
+								score_neg = iP4.mFindSmallPattern(shuldNotHaveImageNames[j], selectedside, location_neg, Rs1, angle_found, imageOffsetX, imageOffsetY);
+								score_neg_sum = score_neg_sum + score_neg;
 							}
-							else score_negative[i] = 1;
+							score_neg_ave = score_neg_sum / loopIndex;
+							score_negative[i] = score_neg_ave;
 						}
 						else score_negative[i] = 1;
 					}
 					else score_negative[i] = 1;
+				}
+				else score_negative[i] = 1;
 
-					// Compare results for both sides of the coin
-					//
-					// 1. improve or reduce score based on Detail and Negative                   
-					if (selectedside == 1 && score_detail[i] > 45)
-					{
-						//score_array1[i] = (score_array1[i] + (2 * score_detail[i] * (1 - score_array1[i]) - (1 - score_array1[i])));
-						//score_array1[i] = score_array1[i] + score_detail[i];
-						score_array1[i] = ((score_array1[i] + score_detail[i]) / 2);
-						//if (scoreOK > 0) scoreOK = (int)(score_max1 * 100);
-					}
-					else if (selectedside == 2 && score_detail[i] > 45)
-					{
-						//score_array2[i] = (score_array2[i] + (2 * score_detail[i] * (1 - score_array2[i]) - (1 - score_array2[i])));
-						score_array2[i] = ((score_array2[i] + score_detail[i]) / 2);
-						//score_max = (score_max2 + score_detail[i]) / 2;                        
-					}
-
-					// 2. find maximun of side 1
-					float score_max1 = (float)score_array1.Max();
-					int index_max1 = Array.IndexOf(score_array1, score_max1);
-					Point location_max1 = location_array1[index_max1];
-					location_max1.X = (int)(Xs1);
-					location_max1.Y = (int)(Ys1);
-					double angle_found1 = angle_array1[index_max1];
-
-					// 3. find maximun of side 2
-					float score_max2 = (float)score_array2.Max();
-					int index_max2 = Array.IndexOf(score_array2, score_max2);
-					Point location_max2 = location_array2[index_max2];
-					location_max2.X = (int)(Xs2);
-					location_max2.Y = (int)(Ys2);
-					double angle_found2 = angle_array2[index_max2];
-
-					// 4 assigne maximal values to results
-					float score_max;
-
-					Point location_max = new Point(0, 0);
-					angle_found = 400;
-
-
-					int thresholdMinAccept = Settings.SettingsItems.TRMI;
-					if (dTolerance > 1) { thresholdMinAccept = Settings.SettingsItems.TRNO; }
-
-					if ((score_max2 * 100 < thresholdMinAccept) && (score_max1 * 100 < thresholdMinAccept))
-					{
-						modelNameOK = "ND";
-						scoreOK = 0;
-					}
-					else if (score_max2 > score_max1)
-					{
-						selectedside = 2;
-						modelNameOK = modelName[index_max2];
-						scoreOK = (int)(score_max2 * 100);
-						score_max = score_max2;
-						location_max = location_max2;
-						angle_found = angle_found2;
-						index_max = index_max2;
-						toleranceOut_max = toleranceOut[index_max2];
-						angleOK = (int)angle_found;
-					}
-					else
-					{
-						selectedside = 1;
-						modelNameOK = modelName[index_max1];
-						scoreOK = (int)(score_max1 * 100);
-						score_max = score_max1;
-						location_max = location_max1;
-						angle_found = angle_found1;
-						index_max = index_max1;
-						toleranceOut_max = toleranceOut[index_max1];
-						angleOK = (int)angle_found;
-					}
+				// Compare results for both sides of the coin
+				//
+				// 1. improve or reduce score based on Detail and Negative                   
+				if (selectedside == 1 && score_detail[i] > 45)
+				{
+					//score_array1[i] = (score_array1[i] + (2 * score_detail[i] * (1 - score_array1[i]) - (1 - score_array1[i])));
+					//score_array1[i] = score_array1[i] + score_detail[i];
+					score_array1[i] = ((score_array1[i] + score_detail[i]) / 2);
+					//if (scoreOK > 0) scoreOK = (int)(score_max1 * 100);
+				}
+				else if (selectedside == 2 && score_detail[i] > 45)
+				{
+					//score_array2[i] = (score_array2[i] + (2 * score_detail[i] * (1 - score_array2[i]) - (1 - score_array2[i])));
+					score_array2[i] = ((score_array2[i] + score_detail[i]) / 2);
+					//score_max = (score_max2 + score_detail[i]) / 2;                        
 				}
 
+				// 2. find maximun of side 1
+				float score_max1 = (float)score_array1.Max();
+				int index_max1 = Array.IndexOf(score_array1, score_max1);
+				Point location_max1 = location_array1[index_max1];
+				location_max1.X = (int)(Xs1);
+				location_max1.Y = (int)(Ys1);
+				double angle_found1 = angle_array1[index_max1];
+
+				// 3. find maximun of side 2
+				float score_max2 = (float)score_array2.Max();
+				int index_max2 = Array.IndexOf(score_array2, score_max2);
+				Point location_max2 = location_array2[index_max2];
+				location_max2.X = (int)(Xs2);
+				location_max2.Y = (int)(Ys2);
+				double angle_found2 = angle_array2[index_max2];
+
+				// 4 assigne maximal values to results
+				float score_max;
+
+				Point location_max = new Point(0, 0);
+				angle_found = 400;
+
+
+				int thresholdMinAccept = Settings.SettingsItems.TRMI;
+				if (dTolerance > 1) { thresholdMinAccept = Settings.SettingsItems.TRNO; }
+
+				if ((score_max2 * 100 < thresholdMinAccept) && (score_max1 * 100 < thresholdMinAccept))
+				{
+					modelNameOK = "ND";
+					scoreOK = 0;
+				}
+				else if (score_max2 > score_max1)
+				{
+					selectedside = 2;
+					modelNameOK = modelName[index_max2];
+					scoreOK = (int)(score_max2 * 100);
+					score_max = score_max2;
+					location_max = location_max2;
+					angle_found = angle_found2;
+					index_max = index_max2;
+					toleranceOut_max = toleranceOut[index_max2];
+					angleOK = (int)angle_found;
+				}
 				else
 				{
-					score_array1[i] = 0;
-					angle_array1[i] = 0;
-					location_array1[i] = new Point(0, 0);
-
-					score_array2[i] = 0;
-					angle_array2[i] = 0;
-					location_array2[i] = new Point(0, 0);
-
-					score_detail[i] = 0;
+					selectedside = 1;
+					modelNameOK = modelName[index_max1];
+					scoreOK = (int)(score_max1 * 100);
+					score_max = score_max1;
+					location_max = location_max1;
+					angle_found = angle_found1;
+					index_max = index_max1;
+					toleranceOut_max = toleranceOut[index_max1];
+					angleOK = (int)angle_found;
 				}
-
 			}
 			if (index_max >= 0)
 				WriteDebug("index of max score: " + index_max.ToString() + " from: " + listOfPreSelected.ToString());
@@ -1188,13 +1245,19 @@ namespace Cointero
 			{
 				int nop = 0;
 			}
-			// Stop for debugging MM !!!
+            // Stop for debugging MM !!!
 
-			// DECODE
-			// Find rotation angle1
-			// Check actual image rorated by the angle1 
-			// and generate the correlation (score)
-			Decode(1, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
+            // DECODE
+            // Find rotation angle1
+            // Check actual image rorated by the angle1 
+            // and generate the correlation (score)
+
+
+            int dTolerance = 1; // double tolerance if needed
+            List<int> listOfPreSelected = new List<int>();
+            listOfPreSelected = PreSelection(dTolerance, Rs1, liveMag1, liveMag2, liveMag3, PortDataReceived.largeRadius);
+            PortDataReceived.largeRadius = false; // reset large radius request for next coin
+            Decode(1, listOfPreSelected, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
 				out string modelNameOK, out int scoreOK, out int angleOK, out int toleranceOut_max, out int non0_score_elements);
 
 			if (scoreOK < Settings.SettingsItems.TRMI)
@@ -1391,13 +1454,20 @@ namespace Cointero
 			{
 				int nop = 0;
 			}
-			// Stop for debugging MM !!!
+            // Stop for debugging MM !!!
 
-			// DECODE
-			// Find rotation angle1
-			// Check actual image rorated by the angle1 
-			// and generate the correlation (score)
-			Decode(1, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
+            // DECODE
+            // Find rotation angle1
+            // Check actual image rorated by the angle1 
+            // and generate the correlation (score)
+
+			int dTolerance = 1; // double tolerance if needed
+            List<int> listOfPreSelected = new List<int>();
+            listOfPreSelected = PreSelection(dTolerance, Rs1, liveMag1, liveMag2, liveMag3, PortDataReceived.largeRadius);
+			PortDataReceived.largeRadius = false; // reset large radius request for next coin
+			WriteDebug("PreSelected models: " + listOfPreSelected.Count);
+
+            Decode(1, listOfPreSelected, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
 				out string modelNameOK, out int scoreOK, out int angleOK, out int toleranceOut_max, out int non0_score_elements);
 			if (scoreOK < Settings.SettingsItems.TRMI)
 			{
