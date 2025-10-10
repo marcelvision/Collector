@@ -54,7 +54,8 @@ namespace Cointero
         public static bool bmpReadyB = false;
         private static PixelFormat m_enBitmapPixelFormatB = PixelFormat.DontCare;
 
-        public static SimpleLogger logDr = new SimpleLogger(true);
+        public static Coinpare.SimpleLogger logDr = new Coinpare.SimpleLogger(false);
+        //public static SimpleLogger logDr = new SimpleLogger(true);
         #endregion
 
         // Camera call back functions
@@ -79,6 +80,13 @@ namespace Cointero
             }
             m_Bitmap2ShowF.Palette = palette;
             bmpReadyF = true;
+
+            // update task manager que 
+            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            tmCueCom.iDNumber = IcountF;
+            tmCueCom.description = "Image"+ IcountF.ToString() + "cam F received";
+            tmCueCom.tmType = FormMain.tmType.IMAGE;
+            FormMain.tmCueList.Add(tmCueCom);
 
             infoMessage = "ImageCallbackFuncF : Front camera image acquired " + pFrameInfoF.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
@@ -108,6 +116,13 @@ namespace Cointero
             m_Bitmap2ShowB.Palette = palette;
             bmpReadyB = true;
 
+            // update task manager que 
+            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            tmCueCom.iDNumber = IcountB;
+            tmCueCom.description = "Image" + IcountB.ToString() + "cam B received";
+            tmCueCom.tmType = FormMain.tmType.IMAGE;
+            FormMain.tmCueList.Add(tmCueCom);
+
             //NecessaryOperBeforeGrab();
             //stopGrabbingB();
             infoMessage = "ImageCallbackFuncB : Back camera image acquired " + pFrameInfoB.nFrameLen.ToString() + " B and converted";
@@ -134,6 +149,14 @@ namespace Cointero
             ConvertRgbToBgrFast(m_Bitmap2ShowT);
 
             bmpReadyT = true;
+
+            // update task manager que 
+            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            tmCueCom.iDNumber = IcountT;
+            tmCueCom.description = "Image" + IcountT.ToString() + "cam T received";
+            tmCueCom.tmType = FormMain.tmType.IMAGE;
+            FormMain.tmCueList.Add(tmCueCom);
+
             infoMessage = "ImageCallbackFuncT : Top camera image acquired " + pFrameInfoT.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
             logDr.Info(infoMessage);

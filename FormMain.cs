@@ -1,8 +1,6 @@
 using Coinpare;
-using Cointero;
 using Emgu.CV;
 using Emgu.CV.Structure;
-using Microsoft.VisualBasic.Logging;
 using MvCamCtrl.NET;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -11,17 +9,16 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Timers;
-using System.Xml.Linq;
-using static Cointero.FormMain;
 
 namespace Cointero
 {
-	public partial class FormMain : Form
-	{
-		#region Initial Deffinitions
+	public partial class FormMain : Form, IComListener
+    {
+        private PortDataReceived _portWorker;
+        #region Initial Deffinitions
 
-		// Import the kernel32.dll function to allocate a console
-		[DllImport("kernel32.dll", SetLastError = true)]
+        // Import the kernel32.dll function to allocate a console
+        [DllImport("kernel32.dll", SetLastError = true)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		private static extern bool AllocConsole();
 
@@ -37,8 +34,8 @@ namespace Cointero
 		string workingDirPath = "D:\\COINTER\\Images\\TrainUnsorted";
 		string modelsDirPath = "D:\\COINTER\\Images\\ModelsN";
 		SimpleLogger log = new SimpleLogger(true);
-		SimpleLogger logData = new SimpleLogger(false);
-		Status s = new Status();
+		SimpleLogger logData = new SimpleLogger(false);        
+		CStatus s = new CStatus();
 		int timerEntryIndex = 0;
 
 		Image<Gray, Byte> imageSide1;
@@ -86,7 +83,20 @@ namespace Cointero
 		}
 		Coin coin = new Coin();
 
-		bool imagesReady = false;
+
+        public enum tmType { IMAGE, TRIGG, RESULT, OUT };
+        public struct tmCue
+		{
+			public int iDNumber;
+			public string description;
+			// 1 - IMAGE, 2 - TRIGG, 3 - RESULT, 4 - OUT
+			public tmType tmType;
+        }
+
+		public static List<tmCue> tmCueList = new List<tmCue>();
+		public static int tmCueCounterLast = 0;
+
+        bool imagesReady = false;
 		int imagesNotReadyCounter = 0;
 		public string[] imageFilePathsEdges;
 		public string[] imageFilePathsSide1;
@@ -99,10 +109,11 @@ namespace Cointero
 		float[] Ys;
 		float[] Rs;
 
-		#endregion
+        #endregion        
 
-		#region timers initialisation //??? needed
-		private static TimerControl tc = new TimerControl();
+
+        #region timers initialisation //??? needed
+        private static TimerControl tc = new TimerControl();
 		private static TimerControlImage tci = new TimerControlImage();
 		private static TimerControlRefresh tcr = new TimerControlRefresh();
 		private static TimerControlSimulator tct = new TimerControlSimulator();
@@ -140,15 +151,17 @@ namespace Cointero
 			AllocConsole();
 			InitializeComponent();
 			this.Text = VERSION;
-			WriteDebug("Load seetings: ");
+            _portWorker = new PortDataReceived();
+            WriteDebug("Load seetings: ");
 			Settings.Load();
 			WriteDebug("Init com port: ");
 			Console.WriteLine("Init com port: ");
 			Debug.WriteLine("Init com port: 1");
 			Trace.WriteLine("Init com port: 2");
-			string comPortInitialised = PortDataReceived.initIFCCOM();
+            //string comPortInitialised = PortDataReceived.initIFCCOM();
+            string comPortInitialised = _portWorker.initIFCCOM();
 
-			coin.name = "ND";
+            coin.name = "ND";
 			coin.score = "0";
 			coin.time = "0";
 
@@ -243,16 +256,94 @@ namespace Cointero
 
 		}
 
-		#endregion Main Form
+        #endregion Main Form
 
-		#region Timers        
+        #region Com Worker
+        /*
+		private void MainForm_Load(object sender, EventArgs e)
+        {
+            _portWorker.Start();
+        }
+		*/
 
-		#region TIMER Image grabbing collection
 
-		public void TimerImage_Elapsed(object? sender, ElapsedEventArgs e)
+
+        public void OnComData(int errCode, char data)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => OnComData(errCode, data)));
+                return;
+            }
+
+			SendCommand(errCode, data);
+            //txtOutput.AppendText($"{data}\r\n");
+        }
+
+        void IComListener.FromCOMSendResultsN(string results)
+        {
+            FromCOMSendResultsN(results);
+        }
+
+        private void FromCOMSendResultsN(string results)
+		{
+			if (InvokeRequired)
+			{
+				BeginInvoke(new Action(() => FromCOMSendResultsN(results)));
+				return;
+			}
+		}
+
+        public void TimerStartTC()
+		{
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => TimerStartTC()));
+                return;
+            }
+
+            tc.Start();
+        }
+
+        public void TimerStopTC()
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => TimerStopTC()));
+                return;
+            }
+            tc.Stop();
+        }
+
+        /*
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _portWorker.Stop();
+        }
+		*/
+        #endregion
+
+        #region Timers        
+
+        #region TIMER Image grabbing collection
+
+        public void TimerImage_Elapsed(object? sender, ElapsedEventArgs e)
 		{
 			tci.Stop();
-			if (CamGrab.bmpReadyF && CamGrab.bmpReadyB && CamGrab.bmpReadyT)
+			
+            if (FormMain.tmCueList.Count!= FormMain.tmCueCounterLast)
+			{
+				WriteDebug("tmCueList count: " + FormMain.tmCueList.Count.ToString() + " last: " + FormMain.tmCueCounterLast.ToString());
+                for (int i = 0; i< FormMain.tmCueList.Count; i++)
+				{
+                    WriteDebug("tmCueList count: " + i.ToString() + " : " + FormMain.tmCueList[i].iDNumber.ToString()  + " : " + FormMain.tmCueList[i].description );
+                }
+				
+                FormMain.tmCueCounterLast = FormMain.tmCueList.Count;
+            }
+
+            
+            if (CamGrab.bmpReadyF && CamGrab.bmpReadyB && CamGrab.bmpReadyT)
 			{
 				imagesReady = true;
 				imagesNotReadyCounter = 0;
@@ -318,12 +409,12 @@ namespace Cointero
 
 
 					imp_results = coin.name.Replace("-", "");
-					FormMain.SendResultsN(imp_results);
+					SendResultsN(imp_results);
 					stop_tc = true;
 				}
 				catch (Exception improcErr)
 				{
-					FormMain.SendResultsN("NON000000000N12345678R999");
+					SendResultsN("NON000000000N12345678R999");
 					WriteDebug(" error: " + improcErr.Message);
 					stop_tc = true;
 				}
@@ -707,7 +798,7 @@ namespace Cointero
 					pictureBox3.Image = CamGrab.m_Bitmap2ShowT;
 
 				}
-				FormMain.SendResultsN("NON000000000N12345678R999");
+                SendResultsN("NON000000000N12345678R999");
 
 			}
 			catch (Exception imgdispErr)
@@ -1673,7 +1764,7 @@ namespace Cointero
 			else imageFileName = "--- err load file name ---";
 		}
 
-		static public void SendResultsN(string strModelName)
+		public void SendResultsN(string strModelName)
 		{
 			//default result: <Xon> CIy x CUR DENOMINA Tag CoinID <Xoff>
 			//                <XON> CIxTagCCCDDDDDDDDxxxxx <XOFF >
@@ -1752,23 +1843,31 @@ namespace Cointero
 					data[16] = Convert.ToByte(PortDataReceived.triggCounter);
 					// image counter modulo 100
 					// data[4] = (byte)(ImageProc.ImageIndex % 100);
-					PortDataReceived.send2IFCOM(data);
-					Debug.WriteLine("VPC->IFC: " + data);
+					// PortDataReceived.send2IFCOM(data);
+                    _portWorker.send2IFCOM(data);
+                    Debug.WriteLine("VPC->IFC: " + data);
 					//log.Info("VPC->IFC port: " + System.Text.Encoding.UTF8.GetString(data, 0, data.Length));
 					PortDataReceived.DiscartCOMinBuffer();
 				}
 			}
 			else
 			{
-				PortDataReceived.send2IFCOM(data);
-				Debug.WriteLine("VPC->IFC: " + data);
+				//PortDataReceived.send2IFCOM(data);
+				_portWorker.send2IFCOM(data);
+                Debug.WriteLine("VPC->IFC: " + data);
 				PortDataReceived.DiscartCOMinBuffer();
 				//log.Info("VPC->IFC port: " + System.Text.Encoding.UTF8.GetString(data, 0, data.Length));
 
 			}
-		}
+            // update task manager que 
+            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            tmCueCom.iDNumber = PortDataReceived.triggCounter;
+            tmCueCom.description = "Sending to COM: " + data.ToString();
+            tmCueCom.tmType = FormMain.tmType.OUT;
+            FormMain.tmCueList.Add(tmCueCom);
+        }
 
-		static public void SendCommand(int errCode, char comReply)
+		public void SendCommand(int errCode, char comReply)
 		{
 			//
 			//tct.timer.Interval = 8000;
@@ -1785,7 +1884,9 @@ namespace Cointero
 			data[5] = (char)(48 + (errCode / 10));
 
 			byte[] data2serial = System.Text.Encoding.UTF8.GetBytes(data);
-			PortDataReceived.send2IFCOM(data2serial);
+			
+			_portWorker.send2IFCOM(data2serial);
+            //PortDataReceived.send2IFCOM(data2serial);
 			PortDataReceived.DiscartCOMinBuffer();
 			log.Info("VPC->IFC confirmation with err code: " + errCode.ToString());
 		}

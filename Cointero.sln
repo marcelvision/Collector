@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cointero", "Cointero.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coinpare", "..\Coinpare\Coinpare.csproj", "{B24BC0B2-494F-4D5E-B29B-750DF483DF13}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CointerSim", "..\CointerSim\CointerSim.csproj", "{9CF7187C-CFD8-4800-AA2D-427863375BAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B24BC0B2-494F-4D5E-B29B-750DF483DF13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B24BC0B2-494F-4D5E-B29B-750DF483DF13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B24BC0B2-494F-4D5E-B29B-750DF483DF13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CF7187C-CFD8-4800-AA2D-427863375BAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CF7187C-CFD8-4800-AA2D-427863375BAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CF7187C-CFD8-4800-AA2D-427863375BAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CF7187C-CFD8-4800-AA2D-427863375BAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
