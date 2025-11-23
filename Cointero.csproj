@@ -16,7 +16,7 @@
     <PackageReference Include="Emgu.CV.Bitmap" Version="4.12.0.5764" />
     <PackageReference Include="Emgu.CV.runtime.windows" Version="4.12.0.5764" />
     <PackageReference Include="Emgu.CV.UI" Version="4.12.0.5764" />
-    <PackageReference Include="System.IO.Ports" Version="9.0.9" />
+    <PackageReference Include="System.IO.Ports" Version="9.0.10" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +26,9 @@
   <ItemGroup>
     <Reference Include="MvCamCtrl.Net">
       <HintPath>..\..\..\..\..\Program Files (x86)\MVS\Development\DotNet\win64\MvCamCtrl.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="MvCameraControl.Net">
+      <HintPath>..\..\..\..\..\Program Files (x86)\MVS\Development\DotNet\win64\MvCameraControl.Net.dll</HintPath>
     </Reference>
   </ItemGroup>
 

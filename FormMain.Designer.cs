@@ -33,7 +33,7 @@
             pictureBox3 = new PictureBox();
             textBoxCameraCounters = new TextBox();
             textBoxCoinName = new TextBox();
-            button1 = new Button();
+            buttonSetModels = new Button();
             button2 = new Button();
             button3 = new Button();
             button4 = new Button();
@@ -102,16 +102,16 @@
             textBoxCoinName.Text = "---";
             textBoxCoinName.TextAlign = HorizontalAlignment.Center;
             // 
-            // button1
+            // buttonSetModels
             // 
-            button1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            button1.Location = new Point(5, 588);
-            button1.Margin = new Padding(3, 2, 3, 2);
-            button1.Name = "button1";
-            button1.Size = new Size(76, 22);
-            button1.TabIndex = 5;
-            button1.Text = "COM";
-            button1.UseVisualStyleBackColor = true;
+            buttonSetModels.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            buttonSetModels.Location = new Point(5, 588);
+            buttonSetModels.Margin = new Padding(3, 2, 3, 2);
+            buttonSetModels.Name = "buttonSetModels";
+            buttonSetModels.Size = new Size(76, 22);
+            buttonSetModels.TabIndex = 5;
+            buttonSetModels.Text = "COM";
+            buttonSetModels.UseVisualStyleBackColor = true;
             // 
             // button2
             // 
@@ -220,7 +220,7 @@
             Controls.Add(button6);
             Controls.Add(button3);
             Controls.Add(button2);
-            Controls.Add(button1);
+            Controls.Add(buttonSetModels);
             Controls.Add(textBoxCoinName);
             Controls.Add(textBoxCameraCounters);
             Controls.Add(pictureBox3);
@@ -244,7 +244,7 @@
         private PictureBox pictureBox3;
         private TextBox textBoxCameraCounters;
         private TextBox textBoxCoinName;
-        private Button button1;
+        private Button buttonSetModels;
         private Button button2;
         private Button button3;
         private Button button4;

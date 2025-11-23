@@ -15,6 +15,7 @@ namespace Cointero
 	public partial class FormMain : Form, IComListener
     {
         private PortDataReceived _portWorker;
+        
         #region Initial Deffinitions
 
         // Import the kernel32.dll function to allocate a console
@@ -151,7 +152,7 @@ namespace Cointero
 			AllocConsole();
 			InitializeComponent();
 			this.Text = VERSION;
-            _portWorker = new PortDataReceived();
+            var _portWorker = new PortDataReceived(this);
             WriteDebug("Load seetings: ");
 			Settings.Load();
 			WriteDebug("Init com port: ");
@@ -213,7 +214,9 @@ namespace Cointero
 				return;
 			}
 			WriteDebug("Check working directory: " + modelsDirPath);
-			if (Directory.Exists(modelsDirPath))
+            
+			// load filenames from models directory
+            if (Directory.Exists(modelsDirPath))
 			{
 				imageFilePathModels = Directory.GetFiles(modelsDirPath, "*.bmp", SearchOption.TopDirectoryOnly);
 			}
@@ -242,7 +245,7 @@ namespace Cointero
 			WriteDebug("Loading Models");
 
 			// mmm
-			this.ActiveControl = button1;
+			this.ActiveControl = buttonSetModels;
 			LoadModels();
 
 			WriteDebug("simulation of image index " + imageIndex.ToString());
@@ -259,8 +262,9 @@ namespace Cointero
         #endregion Main Form
 
         #region Com Worker
-        /*
-		private void MainForm_Load(object sender, EventArgs e)
+        
+		/*
+		private void FormMain_Load(object sender, EventArgs e)
         {
             _portWorker.Start();
         }
@@ -516,19 +520,19 @@ namespace Cointero
 			else this.button2.BackColor = System.Drawing.Color.Red;
 
 			// refresh camera button colour
-			if (this.button1.InvokeRequired)
+			if (this.buttonSetModels.InvokeRequired)
 			{
-				Invoke((System.Windows.Forms.MethodInvoker)(() => this.button1.Text = PortDataReceived.CounterCOMReceived.ToString() + "/" + PortDataReceived.CounterCOMPacket.ToString()));
+				Invoke((System.Windows.Forms.MethodInvoker)(() => this.buttonSetModels.Text = PortDataReceived.CounterCOMReceived.ToString() + "/" + PortDataReceived.CounterCOMPacket.ToString()));
 				if (PortDataReceived.IsCOMopen())
-					Invoke((System.Windows.Forms.MethodInvoker)(() => this.button1.BackColor = System.Drawing.Color.Green));
-				else Invoke((System.Windows.Forms.MethodInvoker)(() => this.button1.BackColor = System.Drawing.Color.Red));
+					Invoke((System.Windows.Forms.MethodInvoker)(() => this.buttonSetModels.BackColor = System.Drawing.Color.Green));
+				else Invoke((System.Windows.Forms.MethodInvoker)(() => this.buttonSetModels.BackColor = System.Drawing.Color.Red));
 			}
 			else
 			{
-				this.button1.Text = PortDataReceived.CounterCOMReceived.ToString() + "/" + PortDataReceived.CounterCOMPacket.ToString();
+				this.buttonSetModels.Text = PortDataReceived.CounterCOMReceived.ToString() + "/" + PortDataReceived.CounterCOMPacket.ToString();
 				if (PortDataReceived.IsCOMopen())
-					this.button1.BackColor = System.Drawing.Color.Green;
-				else this.button1.BackColor = System.Drawing.Color.Red;
+					this.buttonSetModels.BackColor = System.Drawing.Color.Green;
+				else this.buttonSetModels.BackColor = System.Drawing.Color.Red;
 			}
 			// refresh coin NameForm textbox
 			if (this.textBoxCoinName.InvokeRequired)
@@ -1375,8 +1379,8 @@ namespace Cointero
 			// display and print
 			try
 			{
-				iP4.mShowCircles2(1, Rs1, Xs1, Ys1);
-				iP4.mShowCircles2(2, Rs2, Xs2, Ys2);
+				iP4.mShowCircles2(1, 1, Rs1, Xs1, Ys1);
+				iP4.mShowCircles2(2, 1, Rs2, Xs2, Ys2);
 
 				if (ImageProc.DEBUG) iP4.mCheckImages();
 				//WriteDebug("start display results");
@@ -1583,8 +1587,8 @@ namespace Cointero
 
 			try
 			{
-				iP4.mShowCircles2(1, Rs1, Xs1, Ys1);
-				iP4.mShowCircles2(2, Rs2, Xs2, Ys2);
+				iP4.mShowCircles2(1, 1, Rs1, Xs1, Ys1);
+				iP4.mShowCircles2(2, 1,Rs2, Xs2, Ys2);
 				//WriteDebug("circles created");
 
 				pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
