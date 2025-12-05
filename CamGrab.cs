@@ -84,7 +84,7 @@ namespace Cointero
             // update task manager que 
             FormMain.tmCue tmCueCom = new FormMain.tmCue();
             tmCueCom.iDNumber = IcountF;
-            tmCueCom.description = "Image"+ IcountF.ToString() + "cam F received";
+            tmCueCom.description = "Image"+ IcountF.ToString() + " camF received";
             tmCueCom.tmType = FormMain.tmType.IMAGE;
             FormMain.tmCueList.Add(tmCueCom);
 
@@ -119,7 +119,7 @@ namespace Cointero
             // update task manager que 
             FormMain.tmCue tmCueCom = new FormMain.tmCue();
             tmCueCom.iDNumber = IcountB;
-            tmCueCom.description = "Image" + IcountB.ToString() + "cam B received";
+            tmCueCom.description = "Image" + IcountB.ToString() + " camB received";
             tmCueCom.tmType = FormMain.tmType.IMAGE;
             FormMain.tmCueList.Add(tmCueCom);
 
@@ -153,7 +153,7 @@ namespace Cointero
             // update task manager que 
             FormMain.tmCue tmCueCom = new FormMain.tmCue();
             tmCueCom.iDNumber = IcountT;
-            tmCueCom.description = "Image" + IcountT.ToString() + "cam T received";
+            tmCueCom.description = "Image" + IcountT.ToString() + " camT received";
             tmCueCom.tmType = FormMain.tmType.IMAGE;
             FormMain.tmCueList.Add(tmCueCom);
 

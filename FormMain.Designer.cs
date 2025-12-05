@@ -170,6 +170,7 @@
             button6.TabIndex = 8;
             button6.Text = "X6";
             button6.UseVisualStyleBackColor = true;
+            button6.Click += button6_Click;
             // 
             // textBoxFileName
             // 

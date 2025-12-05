@@ -37,6 +37,8 @@ namespace Cointero
 
             checkBoxAutoFillUp.Checked = true;
 
+            CreateCoinName();
+
         }
 
         public struct CoinStruc 

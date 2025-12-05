@@ -4,6 +4,7 @@ using Emgu.CV.Structure;
 using MvCamCtrl.NET;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -35,10 +36,13 @@ namespace Cointero
         string VERSION = "Cointero 0.1";
         string workingDirPath = "D:\\COINTER\\Images\\TrainUnsorted";
         string modelsDirPath = "D:\\COINTER\\Images\\ModelsN";
+        public const string MODEL_IMAGES_DIRECTORY = "D:\\COINTER\\Images\\ModelsN\\";
         SimpleLogger log = new SimpleLogger(true);
         SimpleLogger logData = new SimpleLogger(false);
         CStatus s = new CStatus();
         int timerEntryIndex = 0;
+        string lastISO;
+        bool saveImgInRun = false;
 
         Image<Gray, Byte> imageSide1;
         Image<Gray, Byte> imageSide2;
@@ -52,9 +56,10 @@ namespace Cointero
 
         // !!! this should be asign from Settings.SettingItem.NUMO
         // public int NUMofMODELS = Settings.SettingsItems.NOMO;
-        const int NUMofMODELS = 2000;
+        const int NUMofMODELS = 2500;
         Image<Gray, Byte>[] imageModel = new Image<Gray, Byte>[NUMofMODELS];
         Image<Gray, Byte>[] imageResModel = new Image<Gray, Byte>[NUMofMODELS];
+        //private readonly ResultMatrix matrix = new ResultMatrix(NUMofMODELS, NUMofMODELS);
         // !!! this should be asign from Settings.SettingItem.NUMO
 
         float[] modelDiemeters = new float[NUMofMODELS];
@@ -112,7 +117,6 @@ namespace Cointero
         float[] Rs;
 
         #endregion        
-
 
         #region timers initialisation //??? needed
         private static TimerControl tc = new TimerControl();
@@ -247,13 +251,16 @@ namespace Cointero
 
             // mmm
             this.ActiveControl = buttonSetModels;
-            LoadModels();
+            LoadModels(true);
+
+            lastISO = Settings.SettingsItems.LISO;
 
             WriteDebug("simulation of image index " + imageIndex.ToString());
             ShowNextImage(imageIndex);
             ShowFileName();
             takeImageFromFile = true;
             DecodeFromCamera();
+            takeImageFromFile = false;
             System.Threading.Thread.Sleep(Settings.SettingsItems.SLPT);
             counterNG = 0;
             counterOK = 0;
@@ -630,7 +637,7 @@ namespace Cointero
                 else this.textBoxCameraCounters.Text = counterNG.ToString() + " | " + imageIndex.ToString() + " - " + imageIndex.ToString() + " - " + imageIndex.ToString() + " | " + counterOK.ToString();
                 //this.textBoxCameraCounters.BackColor = System.Drawing.Color.Green;
             }
-
+            */
             //refresh file NameForm textbox
             if (this.textBoxFileName.InvokeRequired)
             {
@@ -644,7 +651,7 @@ namespace Cointero
                 else this.textBoxFileName.Text = imageFileName;
                 //this.textBoxCameraCounters.BackColor = System.Drawing.Color.Green;
             }
-
+            /*
             //refresh coin NameForm textbox
             if (this.textBoxCoinName.InvokeRequired)
                 Invoke((System.Windows.Forms.MethodInvoker)(() => this.textBoxCoinName.Text = coin.NameForm));
@@ -669,7 +676,7 @@ namespace Cointero
         #endregion Timers
 
         #region Load Models and find circles
-        private void LoadModels()
+        private void LoadModels(bool detailsCheck)
         {
             WriteDebug("Start models processing");
             int tmpDbug = Settings.SettingsItems.DBUG;
@@ -709,7 +716,8 @@ namespace Cointero
                             string[] mustHaveImageNames = Directory.GetFiles(mustHaveImagePath, "*.bmp", SearchOption.TopDirectoryOnly);
                             if (mustHaveImageNames.Length > 0)
                             {
-                                modelDetail[i] = true;
+                                if (detailsCheck)
+                                    modelDetail[i] = true;
                             }
                             else
                             {
@@ -718,12 +726,13 @@ namespace Cointero
                         }
                         // Collect information about presence of Negative models
                         string shouldNotHaveImagePath = modelsDirPath + "\\" + modelName[i] + "\\Negative\\";
-                        if (Directory.Exists(mustHaveImagePath))
+                        if (Directory.Exists(shouldNotHaveImagePath))
                         {
                             string[] shutNotHaveImageNames = Directory.GetFiles(shouldNotHaveImagePath, "*.bmp", SearchOption.TopDirectoryOnly);
                             if (shutNotHaveImageNames.Length > 0)
                             {
-                                modelNegative[i] = true;
+                                if (detailsCheck)
+                                    modelNegative[i] = true;
                             }
                             else
                             {
@@ -865,10 +874,7 @@ namespace Cointero
             {
                 try
                 {
-                    CamGrab.m_Bitmap2ShowF.Save(filenameF, ImageFormat.Bmp);
-                    CamGrab.m_Bitmap2ShowB.Save(filenameB, ImageFormat.Bmp);
-                    CamGrab.m_Bitmap2ShowT.Save(filenameT, ImageFormat.Bmp);
-
+                    _saveImages(filenameF, filenameB, filenameT);
                     path_nameParts[0].Substring(path_nameParts[0].Length - 3, path_nameParts[0].Length);
                     string coin_name = string.Join("_", path_nameParts);
                     NameForm.SetCoinName(coin_name);
@@ -884,6 +890,13 @@ namespace Cointero
                 Debug.WriteLine("Image Saving: Image counters are not matching");
                 log.Debug("Image Saving: Image counters are not matching");
             }
+        }
+
+        public void _saveImages(string filenameF, string filenameB, string filenameT )
+        {
+            CamGrab.m_Bitmap2ShowF.Save(filenameF, ImageFormat.Bmp);
+            CamGrab.m_Bitmap2ShowB.Save(filenameB, ImageFormat.Bmp);
+            CamGrab.m_Bitmap2ShowT.Save(filenameT, ImageFormat.Bmp);
         }
 
         #endregion
@@ -908,6 +921,11 @@ namespace Cointero
                     WriteDebug("call DecodeFromCamera");
                     DecodeFromCamera();
                     WriteDebug("return from DecodeFromCamera");
+                    if (saveImgInRun)
+                    {
+                        WriteDebug("Save images while running");
+                        saveImages();
+                    }
                 }
                 catch (Exception eShow)
                 {
@@ -977,6 +995,27 @@ namespace Cointero
             return listOfPreSelected;
         }
 
+        private List<int> SortPreselection(List<int> listOfPreSelected, string last_run_iso)
+        {
+            List<int> sortedListOfPreSelected = new List<int>();
+            // sort preselected models based on detail and negative model presence
+            // first models with detail and without negative
+            for (int k = 0; k < listOfPreSelected.Count; k++)
+            {
+                if (modelName[listOfPreSelected[k]].Contains(last_run_iso))
+                {
+                    sortedListOfPreSelected.Insert(0, listOfPreSelected[k]);
+                }
+                else
+                {
+                    sortedListOfPreSelected.Add(listOfPreSelected[k]);
+                }
+            }
+
+            return sortedListOfPreSelected;
+        }
+
+        /*
         private void Decode(float dTolerance, List<int> listOfPreSelected, float Rs1, float Xs1, float Xs2, float Ys1, float Ys2, int liveMag1, int liveMag2, int liveMag3,
         out string modelNameOK, out int scoreOK, out int angleOK, out int toleranceOut_max, out int non0_score_elements)
         {
@@ -1055,6 +1094,7 @@ namespace Cointero
 
 
 				*/
+        /*
                 //WriteDebug("Radius in " + (int)Rs1*2*1000/148 + "min " + (int)(Rs[i] - radius_tolerance) * 2 * 1000 / 148 + "max " + (int)(Rs[i] + radius_tolerance) * 2 * 1000 / 148);
                 // if diameter and magnetic params are in tolerance
                 // go to best model image search
@@ -1244,216 +1284,301 @@ namespace Cointero
                 WriteDebug("index of max score: " + index_max.ToString() + " from: " + listOfPreSelected.ToString());
             non0_score_elements = score_array1.Count(C => C != 0);
             _portWorker.largeRadius = false;
-        }
+        }        
+        */
 
-        private void DecodeFromFile()
+        // DECODE FUNCTION
+        // Decode function takes in
+        //  - preselected model list
+        //  - and actual coin image with pre calculated live parameters
+        // to find best matching model
+        private void Decode(float dTolerance, int _imageindex, List<int> listOfPreSelected, float Rs1, float Xs1, float Xs2, float Ys1, float Ys2, int liveMag1, int liveMag2, int liveMag3,
+            out string modelNameOK, out int scoreOK, out int angleOK, out int scoreDetailOut, out int non0_score_elements, out int resultSide)
         {
-            string imageSide1Path = this.imageFilePathsSide1[imageIndex];
-            string imageSide2Path = this.imageFilePathsSide2[imageIndex];
-            string imageEdgesPath = this.imageFilePathsEdges[imageIndex];
 
-            WriteDebug("start");
-            DateTime start = DateTime.Now;
-            // Initialise image proessing
-            iP4 = new ImageProc(imageSide1Path, imageSide2Path, imageEdgesPath, imageFilePathModels[0]);
+            modelNameOK = "ND";
+            scoreOK = -1;
+            angleOK = -1;
+            non0_score_elements = 0;
+            resultSide = 0;
 
-            // MODELS -------------------------
-            // 1. Load models if not yet loaded
-            // 2. Find circle in model and
-            // 3. generate all rotations of the model
-            if (!imageModelsArraySet)
+            bool exitloop = false;
+            float[] score_array1 = new float[imageFilePathModels.Length];
+            float[] angle_array1 = new float[imageFilePathModels.Length];
+            Point[] location_array1 = new Point[imageFilePathModels.Length];
+            float[] score_array2 = new float[imageFilePathModels.Length];
+            float[] angle_array2 = new float[imageFilePathModels.Length];
+            Point[] location_array2 = new Point[imageFilePathModels.Length];
+            float[] score_detail = new float[imageFilePathModels.Length];
+            float[] score_negative = new float[imageFilePathModels.Length];
+
+            float mag1_tol = Settings.SettingsItems.MG1T * dTolerance;
+            float mag2_tol = Settings.SettingsItems.MG2T * dTolerance;
+            float mag3_tol = Settings.SettingsItems.MG3T * dTolerance;
+            float radius_tolerance = (((Settings.SettingsItems.RADT * 148 / 1000) / 2) * dTolerance);
+            int[] toleranceOut = new int[imageFilePathModels.Length];
+            scoreDetailOut = 0;
+            double angle_found = 400;
+            float totalScore = 0;
+            //List<int> listOfPreSelected = new List<int>();
+            int index_max = -1;
+
+            for (int j = 0; j < imageFilePathModels.Length; j++)
             {
-                LoadModels();
+                score_array1[j] = 0;
+                angle_array1[j] = 0;
+                location_array1[j] = new Point(0, 0);
+                score_array2[j] = 0;
+                angle_array2[j] = 0;
+                location_array2[j] = new Point(0, 0);
+                score_detail[j] = 0;
             }
 
-            // THICKNESS check top edge coin thickness and colour
-            /*
-			try
-			{
-				iP4.mFitLine();
-			}
-			catch (Exception eFitline1)
-			{
-				WriteDebug(eFitline1.Message);
-			}
-			*/
-
-            WriteDebug("start Find circle on model");
-
-            int radius_min = 1;
-            int radius_max = 1;
-
-
-            // Get diameter parameter of side1 from file NameForm 
-            string coinIDfromFile = "";
-            int side1Diemeters = 0;
-            int side2Diemeters = 0;
-            int liveMag1 = 0;
-            int liveMag2 = 0;
-            int liveMag3 = 0;
-            if (imageFilePathsSide1.Length > 0 && imageFilePathsSide2.Length > 0 && imageFilePathsEdges.Length > 0)
+            for (int k = 0; k < listOfPreSelected.Count; k++)
             {
-                if (File.Exists(imageFilePathsSide1[imageIndex]) && File.Exists(imageFilePathsSide2[imageIndex]) && File.Exists(imageFilePathsEdges[imageIndex]))
+                int i = listOfPreSelected[k];
+                toleranceOut[i] = 0;
+
+                if (i == -1)
                 {
-                    // 1.2 read diameter from filename 
-                    var splitString1 = imageFilePathsSide1[imageIndex].Split("_");
-                    try
+                    ImageProc.DEBUG = true;
+                }
+
+                //WriteDebug("Radius in " + (int)Rs1*2*1000/148 + "min " + (int)(Rs[j] - radius_tolerance) * 2 * 1000 / 148 + "max " + (int)(Rs[j] + radius_tolerance) * 2 * 1000 / 148);
+                // if diameter and magnetic params are in tolerance
+                // go to best model image search
+
+                int res_cutRot = iP4.mCompareImage(imageResModel[i], i, 1, Rs[i], Xs[i], Ys[i], out float score1, out float angle1, out Point location1);
+                if (score1 == 1) score1 = 0;
+                score_array1[i] = score1;
+                angle_array1[i] = angle1;
+                location_array1[i] = location1;
+                WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle:  " + angle1.ToString().PadLeft(3, ' ') + " Score:  " + ((int)(score1 * 100)).ToString());
+
+
+                // If the score exeeded high threshold, skip checking side 2
+                float score2 = 0;
+                float angle2 = 0;
+                Point location2 = new Point(0, 0);
+                if ((score1 * 100) < Settings.SettingsItems.TRNO)
+                {
+                    // check side 2 matching models
+                    // res_cutRot = iP4.mCutRotateImage(imageResModel[j], 2, Rs[j], Xs[j], Ys[j], out float score2, out float angle2, out Point location2);
+                    res_cutRot = iP4.mCompareImage(imageResModel[i], i, 2, Rs[i], Xs[i], Ys[i], out float score22, out float angle22, out Point location22);
+                    if (score22 == 1) score22 = 0;
+                    score2 = score22;
+                    angle2 = angle22;
+                    location2 = location22;
+                    score_array2[i] = score2;
+                    angle_array2[i] = angle2;
+                    location_array2[i] = location2;
+                    WriteDebug("ISO: " + modelName[i] + " " + (int)(Rs1) * 2 * 1000 / 148 + " " + (int)(Rs[i]) * 2 * 1000 / 148 + " itt" + i.ToString() + " at Angle2: " + angle2.ToString("000") + " Score2: " + ((int)(score2 * 100)).ToString());
+                }
+                else
+                {
+                    // peacefully leave the loop
+                    exitloop = true;
+                    // mmm ???
+                }
+
+                Point location_detail = location_array1[i];
+                Point location_neg = location_array1[i];
+
+                float score_pattern = 0;
+                float score_pattern_sum = 0;
+                float score_pattern_ave = 0;
+                float score_neg = 0;
+                float score_neg_sum = 0;
+                float score_neg_ave = 0;
+
+                int selectedside;
+                if (score1 > score2)
+                {
+                    resultSide = 1;
+                    //if (s.isOneLoopMode())
+                    //    matrix.SetValue(k, _imageindex, score1, _imageindex, imageFilePathModels[k]);
+                    selectedside = 1;
+                    totalScore = totalScore + score1;
+                    angle_found = angle1;
+                    location_detail.X = (int)Xs1;
+                    location_detail.Y = (int)Ys1;
+                    location_neg.X = (int)Xs1;
+                    location_neg.Y = (int)Ys1;
+                }
+                else
+                {
+                    resultSide = 2;
+                    //if (s.isOneLoopMode())
+                    //    matrix.SetValue(k, _imageindex, score2, _imageindex, imageFilePathModels[k]);
+                    selectedside = 2;
+                    totalScore = totalScore + score2;
+                    angle_found = angle2;
+                    location_detail.X = (int)Xs2;
+                    location_detail.Y = (int)Ys2;
+                    location_neg.X = (int)Xs2;
+                    location_neg.Y = (int)Ys2;
+                }
+
+                // check side if detail model exist and match it
+                if (modelDetail[i])
+                {
+                    string mustHaveImagePath = MODEL_IMAGES_DIRECTORY + "\\" + modelName[i] + "\\Detail\\";
+                    if (Directory.Exists(mustHaveImagePath))
                     {
-                        if (splitString1.Length > 6)
+                        string[] mustHaveImageNames = Directory.GetFiles(mustHaveImagePath);
+                        if (mustHaveImageNames.Length > 0)
                         {
-                            coinIDfromFile = splitString1[2];
-                            side1Diemeters = (int)(Convert.ToDouble(splitString1[3]));
-                            liveMag1 = (int)(Convert.ToDouble(splitString1[4]));
-                            liveMag2 = (int)(Convert.ToDouble(splitString1[5]));
-                            liveMag3 = (int)(Convert.ToDouble(splitString1[6]));
+                            int loopIndex = mustHaveImageNames.Length;
+                            for (int j = 0; j < loopIndex; j++)
+                            {
+                                //int result_p = iP4.mCircleHough(2, radius_min, radius_max, out float Xsp, out float Ysp, out float Rsp);
+                                string[] mustHaveImageSplit = mustHaveImageNames[j].Split("_");
+                                int mustHaveImageOffsetX = (int)(Convert.ToUInt32(mustHaveImageSplit[6]));
+                                int mustHaveImageOffsetY = (int)(Convert.ToUInt32(mustHaveImageSplit[7]));
+                                score_pattern = iP4.mFindSmallPattern(mustHaveImageNames[j], selectedside, location_detail, Rs1, angle_found, mustHaveImageOffsetX, mustHaveImageOffsetY);
+                                score_pattern_sum = score_pattern_sum + score_pattern;
+                                WriteDebug("ISO: " + modelName[i] + " Detail" + j.ToString() + ": " + score_pattern.ToString() + " at ["
+                                    + mustHaveImageOffsetX.ToString() + "," + mustHaveImageOffsetY.ToString() + "]");
+                            }
+                            score_pattern_ave = score_pattern_sum / loopIndex;
+                            score_detail[i] = score_pattern_ave;
+
                         }
-                        var splitString2 = imageFilePathsSide2[imageIndex].Split("_");
-                        if (splitString1.Length > 6)
-                        {
-                            side2Diemeters = (int)(Convert.ToDouble(splitString2[3]));
-                        }
+                        else score_detail[i] = 0;
                     }
-                    catch (Exception ex)
+                    else score_detail[i] = 0;
+                }
+                else score_detail[i] = 0;
+
+                // check side if detail model exist and match it
+                if (modelNegative[i])
+                {
+                    string shuldNotHaveImagePath = modelsDirPath + "\\" + modelName[i] + "\\Negative\\";
+                    if (Directory.Exists(shuldNotHaveImagePath))
                     {
-                        WriteDebug("decoding filename failed: " + ex.Message);
+                        string[] shuldNotHaveImageNames = Directory.GetFiles(shuldNotHaveImagePath);
+                        if (shuldNotHaveImageNames.Length > 0)
+                        {
+                            int loopIndex = shuldNotHaveImageNames.Length;
+                            for (int j = 0; j < loopIndex; j++)
+                            {
+                                //int result_p = iP4.mCircleHough(2, radius_min, radius_max, out float Xsp, out float Ysp, out float Rsp);
+                                string[] shuldNotHaveImageSplit = shuldNotHaveImageNames[j].Split("_");
+                                int imageOffsetX = (int)(Convert.ToUInt32(shuldNotHaveImageSplit[6]));
+                                int imageOffsetY = (int)(Convert.ToUInt32(shuldNotHaveImageSplit[7]));
+                                score_neg = iP4.mFindSmallPattern(shuldNotHaveImageNames[j], selectedside, location_neg, Rs1, angle_found, imageOffsetX, imageOffsetY);
+                                score_neg_sum = score_neg_sum + score_neg;
+                            }
+                            score_neg_ave = score_neg_sum / loopIndex;
+                            score_negative[i] = score_neg_ave;
+                        }
+                        else score_negative[i] = 1;
                     }
+                    else score_negative[i] = 1;
+                }
+                else score_negative[i] = 1;
+
+                // Compare results for both sides of the coin
+                //
+                // 1. improve or reduce score based on Detail and Negative                   
+                if (selectedside == 1 && modelDetail[i] && score_detail[i] >= 25)
+                {
+                    //score_array1[j] = (score_array1[j] + (2 * score_detail[j] * (1 - score_array1[j]) - (1 - score_array1[j])));
+                    //score_array1[j] = score_array1[j] + score_detail[j];
+                    score_array1[i] = ((score_array1[i] + score_detail[i]) / 2);
+                    //if (scoreOK > 0) scoreOK = (int)(score_max1 * 100);
+                }
+                else if (selectedside == 2 && modelDetail[i] && score_detail[i] >= 25)
+                {
+                    //score_array2[j] = (score_array2[j] + (2 * score_detail[j] * (1 - score_array2[j]) - (1 - score_array2[j])));
+                    score_array2[i] = ((score_array2[i] + score_detail[i]) / 2);
+                    //score_max = (score_max2 + score_detail[j]) / 2;                        
+                }
+
+                // 2. find maximun of side 1
+                float score_max1 = (float)score_array1.Max();
+                int index_max1 = Array.IndexOf(score_array1, score_max1);
+                Point location_max1 = location_array1[index_max1];
+                location_max1.X = (int)(Xs1);
+                location_max1.Y = (int)(Ys1);
+                double angle_found1 = angle_array1[index_max1];
+
+                // 3. find maximun of side 2
+                float score_max2 = (float)score_array2.Max();
+                int index_max2 = Array.IndexOf(score_array2, score_max2);
+                Point location_max2 = location_array2[index_max2];
+                location_max2.X = (int)(Xs2);
+                location_max2.Y = (int)(Ys2);
+                double angle_found2 = angle_array2[index_max2];
+
+                // 4 assigne maximal values to results
+                float score_max;
+
+                Point location_max = new Point(0, 0);
+                angle_found = 400;
+
+                int thresholdMinAccept = Settings.SettingsItems.TRMI;
+                //if (dTolerance > 1) { thresholdMinAccept = Settings.SettingsItems.TRNO; }
+
+                // line for debugging 
+                if (score_max1 == 1 || score_max2 == 1)
+                {
+                    int debug_here = 1;
+                }
+
+                if ((score_max2 * 100 < thresholdMinAccept) && (score_max1 * 100 < thresholdMinAccept))
+                {
+                    modelNameOK = "ND";
+                    scoreOK = 0;
+                    score_max = 0;
+                }
+                else if (score_max2 > score_max1)
+                {
+                    selectedside = 2;
+                    modelNameOK = modelName[index_max2];
+                    scoreOK = (int)(score_max2 * 100);
+                    score_max = score_max2;
+                    location_max = location_max2;
+                    angle_found = angle_found2;
+                    index_max = index_max2;
+                    scoreDetailOut = (int)(score_detail[i] * 100);
+                    //scoreDetailOut = toleranceOut[index_max2];
+                    angleOK = (int)angle_found;
+                }
+                else
+                {
+                    selectedside = 1;
+                    modelNameOK = modelName[index_max1];
+                    scoreOK = (int)(score_max1 * 100);
+                    score_max = score_max1;
+                    location_max = location_max1;
+                    angle_found = angle_found1;
+                    index_max = index_max1;
+                    scoreDetailOut = (int)(score_detail[i]);
+                    //scoreDetailOut = toleranceOut[index_max1];
+                    angleOK = (int)angle_found;
+                }
+
+                if ((score_max * 100) > Settings.SettingsItems.TRNO)
+                {
+                    // peacefully leave the loop
+                    if (!s.isOneLoopMode())
+                        k = listOfPreSelected.Count;
+                    // mmm ???
                 }
             }
-
-            // Get actual coin Side1, find circle  
-            radius_min = (int)(((side1Diemeters - Settings.SettingsItems.RADT) * 148 / 1000) / 2);
-
-            int MULTIPLE_FOR_LARGE_COINS = 4;
-            if (_portWorker.largeRadius)
-                radius_max = (int)(((side1Diemeters + Settings.SettingsItems.RADT * MULTIPLE_FOR_LARGE_COINS) * 148 / 1000) / 2);
-            else
-                radius_max = (int)(((side1Diemeters + 4 + Settings.SettingsItems.RADT) * 148 / 1000) / 2);
-
-            ImageProc._image_models_array_set = imageModelsArraySet;
-            int result_s1 = iP4.mCircleHough(1, radius_min, radius_max, out float Xs1, out float Ys1, out float Rs1);
-            int result_s2 = iP4.mCircleHough(2, radius_min, radius_max, out float Xs2, out float Ys2, out float Rs2);
-
-            // 3. Prepare rotated arrays
-
-            // !!! MMM
-            // replacing camera diameter with sensor diameter (when from camera)
-            // replacing camera diameter with file NameForm diameter (when from files)
-            float Rs1_disp = Rs1;
-            Rs1 = ((side1Diemeters * 148 / 1000) / 2);
-            Rs2 = ((side1Diemeters * 148 / 1000) / 2);
-            float radius_camera = Rs1 * 2 * 1000 / 148;
-
-            // prepare quarter images for coin's side 1 and 2 
-            int result_qs1 = iP4.mQuarterImage(1, Rs1, Xs1, Ys1);
-            int result_qs2 = iP4.mQuarterImage(2, Rs2, Xs2, Ys2);
-
-            // Stop for debugging MM !!!
-            if (imageIndex == 90)
+            if (index_max >= 0)
             {
-                int nop = 0;
-            }
-            // Stop for debugging MM !!!
-
-            // DECODE
-            // Find rotation angle1
-            // Check actual image rorated by the angle1 
-            // and generate the correlation (score)
-
-
-            int dTolerance = 1; // double tolerance if needed
-            List<int> listOfPreSelected = new List<int>();
-            listOfPreSelected = PreSelection(dTolerance, Rs1, liveMag1, liveMag2, liveMag3, _portWorker.largeRadius);
-            _portWorker.largeRadius = false; // reset large radius request for next coin
-            Decode(1, listOfPreSelected, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
-                out string modelNameOK, out int scoreOK, out int angleOK, out int toleranceOut_max, out int non0_score_elements);
-
-            if (scoreOK < Settings.SettingsItems.TRMI)
-            {
-                //int tmpResize = ImageProc.RESIZEF;
-                //ImageProc.RESIZEF = 2;
-                //Decode(2, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
-                //    out modelNameOK, out scoreOK, out angleOK, out toleranceOut_max, out non0_score_elements);
-                //ImageProc.RESIZEF = tmpResize;
-                //WriteDebug("Result --2-- 2nd attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
-                counterNG++;
-                // mmm
-                //NameForm.SetCoinName("Coin not decoded.");  // !!! MM !!! no threshold aplied for 2nd attempt , counting as NG for now
+                float averageScore = totalScore / listOfPreSelected.Count;
+                // mmm !!! listOfPreSelected.Count
+                WriteDebug("Pre-selected: " + listOfPreSelected.Count.ToString() + " models. Ave.score: " + ((int)(averageScore * 100)).ToString() + " index of max: " + index_max.ToString());
+                WriteDebug("max score filename : " + imageFilePathModels[index_max].ToString());
             }
             else
             {
-                counterOK++;
-                WriteDebug("Result --1-- 1st attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
+                WriteDebug("index of max score: not found ");
             }
-
-            DateTime end = DateTime.Now;
-            WriteDebug("start display results" + Rs1.ToString() + ":" + Xs1.ToString() + ":" + Ys1.ToString() + "::" + Rs2.ToString() + ":" + Xs2.ToString() + ":" + Ys2.ToString());
-
-            // display and print
-            try
-            {
-                iP4.mShowCircles2(1, 1, Rs1, Xs1, Ys1);
-                iP4.mShowCircles2(2, 1, Rs2, Xs2, Ys2);
-
-                if (ImageProc.DEBUG) iP4.mCheckImages();
-                //WriteDebug("start display results");
-
-                pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
-                pictureBox1.Image = iP4.GetResult1_Bitmap();
-
-                pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
-                pictureBox2.Image = iP4.GetResult2_Bitmap();
-                //WriteDebug("results displayed");
-            }
-            catch (Exception exDC)
-            {
-                WriteDebug("err dislpay circles" + exDC.Message);
-            }
-
-            var iproc_time = ((end.Minute * 60 * 1000) + (end.Second * 1000) + end.Millisecond) - ((start.Minute * 60 * 1000) + (start.Second * 1000) + start.Millisecond);
-            coin.name = modelNameOK;
-            coin.angle = angleOK.ToString();
-            coin.score = scoreOK.ToString();
-            coin.time = iproc_time.ToString();
-
-            int mag1FromModel = 0;
-            int mag2FromModel = 0;
-            int mag3FromModel = 0;
-
-            if (coinIDfromFile != "")
-            {
-                for (int j = 0; (!string.IsNullOrEmpty(modelId[j]) && j < NUMofMODELS); j++)
-                {
-                    if (modelName[j].Contains(coinIDfromFile))
-                    {
-                        mag1FromModel = modelMag1[j];
-                        mag2FromModel = modelMag2[j];
-                        mag3FromModel = modelMag3[j];
-                    }
-                }
-            }
-
-            string[] image_name = imageSide1Path.Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
-            string[] _coinName = coin.name.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
-            string image_iso = image_name[0].Substring(image_name[0].Length - 3);
-            if (image_name.Length > 5 && _coinName.Length >= 3)
-            {
-                logData.Trace(imageIndex.ToString() + "," + imageIndex.ToString() + "," + imageIndex.ToString() + ","
-                    + coin.time + "," + coin.score + "," + coin.angle + "," + non0_score_elements.ToString() + "," + toleranceOut_max.ToString() + ","
-                    + _coinName[0] + "," + _coinName[1] + "," + _coinName[2] + "," + Rs1_disp.ToString() + ","
-                    + liveMag1.ToString() + "," + liveMag2.ToString() + "," + liveMag3.ToString() + ","
-                    + image_iso + "," + image_name[1] + "," + image_name[2] + "," + image_name[3] + ","
-                    + image_name[4] + "," + image_name[5] + "," + image_name[6] + "," + imageSide1Path);
-            }
-            else
-            {
-                logData.Trace(imageIndex.ToString() + "," + imageIndex.ToString() + "," + imageIndex.ToString() + ","
-                    + coin.time + "," + coin.score + "," + coin.angle + "," + non0_score_elements.ToString() + "," + toleranceOut_max.ToString() + ","
-                    + "XXX" + "," + "0" + "," + "1N00000000R000" + "," + Rs1_disp.ToString() + ","
-                    + mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","
-                    + image_iso + "," + image_name[1] + "," + image_name[2] + "," + image_name[3] + ","
-                    + image_name[4] + "," + image_name[5] + "," + image_name[6] + "," + imageSide1Path);
-            }
-            return;
+            non0_score_elements = score_array1.Count(C => C != 0);
         }
 
         private void DecodeFromCamera()
@@ -1492,7 +1617,7 @@ namespace Cointero
             // 3. generate all rotations of the model
             if (!imageModelsArraySet)
             {
-                LoadModels();
+                LoadModels(true);
             }
 
             // check top edge coin thickness and colour			
@@ -1574,8 +1699,16 @@ namespace Cointero
             _portWorker.largeRadius = false; // reset large radius request for next coin
             WriteDebug("PreSelected models: " + listOfPreSelected.Count);
 
-            Decode(1, listOfPreSelected, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
-                out string modelNameOK, out int scoreOK, out int angleOK, out int toleranceOut_max, out int non0_score_elements);
+            List<int> sortedPreSelected = new List<int>();
+            sortedPreSelected = SortPreselection(listOfPreSelected, lastISO);
+            // FormSim and FormMain share Decode method in not right way (as a modified copy ). 
+            // It will be fixed later. imageIndex is passed to Decode but not used inside.
+            Decode(1, imageIndex, sortedPreSelected, Rs1, Xs1, Xs2, Ys1, Ys2, liveMag1, liveMag2, liveMag3,
+                out string modelNameOK, out int scoreOK, out int angleOK, out int scoreDetail, out int non0_score_elements, out int resultSide);
+
+            if (modelNameOK.Length >= 3)
+                lastISO = modelNameOK.Substring(0, 3);
+
             if (scoreOK < Settings.SettingsItems.TRMI)
             {
                 // if second atempt is required, then do it here
@@ -1583,14 +1716,15 @@ namespace Cointero
                 //    out modelNameOK, out scoreOK, out angleOK, out toleranceOut_max, out non0_score_elements);
                 //WriteDebug("Result --- 222 --- 2nd attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
                 counterNG++;
-                NameForm.SetCoinName("Coin not decoded.");
+                //NameForm.SetCoinName("Coin not decoded.");
+                resultSide = 0;
                 // mmm
                 //saveImages();
             }
             else
             {
                 WriteDebug("Result --- 111 --- 1st attempt : " + modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
-                NameForm.SetCoinName(modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
+                //NameForm.SetCoinName(modelNameOK + " Score: " + scoreOK.ToString() + " at Angle: " + angleOK.ToString());
                 counterOK++;
             }
 
@@ -1599,9 +1733,24 @@ namespace Cointero
 
             try
             {
-                iP4.mShowCircles2(1, 1, Rs1, Xs1, Ys1);
-                iP4.mShowCircles2(2, 1, Rs2, Xs2, Ys2);
-                //WriteDebug("circles created");
+                if (resultSide == 1)
+                {
+                    iP4.mShowCircles2(1, 2, Rs1, Xs1, Ys1);
+                    iP4.mShowCircles2(2, 1, Rs2, Xs2, Ys2);
+                }
+                else if (resultSide == 2)
+                {
+                    iP4.mShowCircles2(1, 1, Rs1, Xs1, Ys1);
+                    iP4.mShowCircles2(2, 2, Rs2, Xs2, Ys2);
+                }
+                else
+                {
+                    iP4.mShowCircles2(1, 1, Rs1, Xs1, Ys1);
+                    iP4.mShowCircles2(2, 1, Rs2, Xs2, Ys2);
+                }
+
+                if (ImageProc.DEBUG) iP4.mCheckImages();
+                //WriteDebug("start display results");
 
                 pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
                 pictureBox1.Image = iP4.GetResult1_Bitmap();
@@ -1661,7 +1810,7 @@ namespace Cointero
                     logData.Trace(
                         CamGrab.IcountF.ToString() + "," + CamGrab.IcountT.ToString() + "," + CamGrab.IcountB.ToString() + ","      // Camera frame counters 
                         + coin.time + "," + coin.score + "," + coin.angle + ","                                                     // Coin parameters from Coindetection
-                        + non0_score_elements.ToString() + "," + toleranceOut_max.ToString() + ","                                  // how many models were considered / which of the dia-mag parameters passed 
+                        + non0_score_elements.ToString() + "," + scoreDetail.ToString() + ","                                  // how many models were considered / which of the dia-mag parameters passed 
                         + _coinName[0] + "," + _coinName[1] + "," + _coinName[2] + "," + Rs1_disp.ToString() + ","                  // detected coin NameForm split + radius
                         + mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","          // detected coin NameForm split magnetic parameters
                         + "Cam" + "," + "0" + "," + "0N00000000R000" + "," + Rs1.ToString() + ","                                   // Parameters detected from the file NameForm in simul mode  + radius in pixels
@@ -1673,7 +1822,7 @@ namespace Cointero
                     logData.Trace(
                         CamGrab.IcountF.ToString() + "," + CamGrab.IcountT.ToString() + "," + CamGrab.IcountB.ToString() + ","      // Camera frame counters 
                         + coin.time + "," + coin.score + "," + coin.angle + ","                                                     // Coin parameters from Coindetection
-                        + non0_score_elements.ToString() + "," + toleranceOut_max.ToString() + ","                                  // how many models were considered / which of the dia-mag parameters passed 
+                        + non0_score_elements.ToString() + "," + scoreDetail.ToString() + ","                                  // how many models were considered / which of the dia-mag parameters passed 
                         + "CaM" + "," + "0" + "," + "0N00000000R000" + "," + Rs1_disp.ToString() + ","                  // detected coin NameForm split + radius
                         + mag1FromModel.ToString() + "," + mag2FromModel.ToString() + "," + mag3FromModel.ToString() + ","          // detected coin NameForm split magnetic parameters
                         + "CaM" + "," + "0" + "," + "0N00000000R000" + "," + Rs1.ToString() + ","                                   // Parameters detected from the file NameForm in simul mode  + radius in pixels
@@ -1981,6 +2130,21 @@ namespace Cointero
                 Thread.Sleep(1000);
                 CamGrab.getCameras();
                 imagesNotReadyCounter = 0;
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            if (!saveImgInRun)
+            {
+                button6.BackColor = Color.Green;
+                saveImgInRun = true;
+            }
+            else
+            {
+                button6.BackColor = Color.White;
+                saveImgInRun = false;
+
             }
         }
     }
