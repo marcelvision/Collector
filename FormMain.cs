@@ -1,7 +1,10 @@
 using Coinpare;
+using Cointero;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using MvCamCtrl.NET;
+using System.ComponentModel;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Drawing.Drawing2D;
@@ -189,8 +192,9 @@ namespace Cointero
 
             WriteDebug("Get Cameras");
             Thread.Sleep(500);
-            CamGrab.getCameras();
+            int nOfCameras = CamGrab.getCameras();
             Thread.Sleep(500);
+            WriteDebug("Cameras initialised: " + nOfCameras.ToString());
 
             WriteDebug("Check working directory: " + workingDirPath);
             if (Directory.Exists(workingDirPath))
@@ -264,6 +268,7 @@ namespace Cointero
             System.Threading.Thread.Sleep(Settings.SettingsItems.SLPT);
             counterNG = 0;
             counterOK = 0;
+            tct.Start();
 
         }
 
@@ -354,6 +359,7 @@ namespace Cointero
         {
             tci.Stop();
 
+            
             if (FormMain.tmCueList.Count != FormMain.tmCueCounterLast)
             {
                 WriteDebug("tmCueList count: " + FormMain.tmCueList.Count.ToString() + " last: " + FormMain.tmCueCounterLast.ToString());
@@ -364,7 +370,7 @@ namespace Cointero
 
                 FormMain.tmCueCounterLast = FormMain.tmCueList.Count;
             }
-
+            
 
             if (CamGrab.bmpReadyF && CamGrab.bmpReadyB && CamGrab.bmpReadyT)
             {
@@ -379,10 +385,12 @@ namespace Cointero
 
                 if (imagesNotReadyCounter > 200)
                 {
+                    s.setErrMode();
                     CamGrab.destroyGrabbers();
                     Thread.Sleep(1000);
-                    CamGrab.getCameras();
+                    int nOfCameras = CamGrab.getCameras();
                     imagesNotReadyCounter = 0;
+                    s.setIdleMode(); 
                 }
                 else
                 {
@@ -407,10 +415,11 @@ namespace Cointero
                 //stop_tc = true;
                 if (_portWorker.operationMODE == 1)
                 {
-                    WriteDebug("operation mode change from 1 to 2");
+                    WriteDebug("save mode: operation mode changing from 1 to 2");
                     if (!s.isSaveMode()) s.setRunMode();
                     _portWorker.operationMODE = 2;
                 }
+                else WriteDebug("save mode: operation mode is not 1");
             }
 
             if (s.isSaveMode() && imagesReady)
@@ -429,15 +438,13 @@ namespace Cointero
                 {
                     // mmm 
                     imageProcessing();
-
-
-                    imp_results = coin.name.Replace("-", "");
-                    SendResultsN(imp_results);
+                    
                     stop_tc = true;
                 }
                 catch (Exception improcErr)
                 {
                     SendResultsN("NON000000000N12345678R999");
+                    _portWorker.comTestSendRequested = false;
                     WriteDebug(" error: " + improcErr.Message);
                     stop_tc = true;
                 }
@@ -460,9 +467,15 @@ namespace Cointero
                 System.Threading.Thread.Sleep(Settings.SettingsItems.SLPT);
                 timerEntryIndex--;
                 WriteDebug("time simul leave index: " + timerEntryIndex);
-
             }
-
+            else if (s.isErrMode())
+            {
+                if (_portWorker.comTestSendRequested == true)
+                {
+                    SendResultsN("NON00000000A0N12345678R999");
+                    _portWorker.comTestSendRequested = false;
+                }
+            }
             if (!stop_tc) tc.Start();
 
             // wait for results
@@ -474,8 +487,9 @@ namespace Cointero
         public void TimerHeartbit_Elapsed(object? sender, ElapsedEventArgs e)
         {
             tct.Stop();
-            int _status = s.getStatus();
-            int _cams = CamGrab.checkCameras();
+            
+            CheckAndResetCams();
+            /*
             if (_portWorker.IsCOMopen())
             {
                 Console.Write("H" + _status.ToString() + "-" + _cams.ToString());
@@ -488,7 +502,8 @@ namespace Cointero
             else
             {
                 Console.Write("HnC" + _status.ToString());
-            }
+            }*/
+
             tct.Start();
         }
         #endregion
@@ -823,7 +838,7 @@ namespace Cointero
                     pictureBox3.Image = CamGrab.m_Bitmap2ShowT;
 
                 }
-                SendResultsN("NON000000000N12345678R999");
+                //SendResultsN("NON000000000N12345678R999");
 
             }
             catch (Exception imgdispErr)
@@ -875,9 +890,11 @@ namespace Cointero
                 try
                 {
                     _saveImages(filenameF, filenameB, filenameT);
-                    path_nameParts[0].Substring(path_nameParts[0].Length - 3, path_nameParts[0].Length);
-                    string coin_name = string.Join("_", path_nameParts);
-                    NameForm.SetCoinName(coin_name);
+                    
+                    //path_nameParts[0].Substring(path_nameParts[0].Length - 3, path_nameParts[0].Length);
+                    //string coin_name = string.Join("_", path_nameParts);
+                    //NameForm.SetCoinName(coin_name);
+                    
                 }
                 catch (Exception saveErr)
                 {
@@ -909,23 +926,27 @@ namespace Cointero
             {
                 try
                 {
-                    pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
-                    pictureBox2.Image = CamGrab.m_Bitmap2ShowB;
-
-                    pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
-                    pictureBox1.Image = CamGrab.m_Bitmap2ShowF;
-
-                    pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
-                    pictureBox3.Image = CamGrab.m_Bitmap2ShowT;
-
                     WriteDebug("call DecodeFromCamera");
                     DecodeFromCamera();
+                    string imp_results = coin.name.Replace("-", "");
+                    SendResultsN(imp_results);
                     WriteDebug("return from DecodeFromCamera");
+
                     if (saveImgInRun)
                     {
                         WriteDebug("Save images while running");
                         saveImages();
                     }
+                    /* 
+                        pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
+                        pictureBox2.Image = CamGrab.m_Bitmap2ShowB;
+
+                        pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+                        pictureBox1.Image = CamGrab.m_Bitmap2ShowF;
+
+                        pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
+                        pictureBox3.Image = CamGrab.m_Bitmap2ShowT;
+                    */
                 }
                 catch (Exception eShow)
                 {
@@ -1286,8 +1307,6 @@ namespace Cointero
             _portWorker.largeRadius = false;
         }        
         */
-
-
 
         // DECODE FUNCTION
         // Decode function takes in
@@ -2178,8 +2197,46 @@ namespace Cointero
 
         #endregion
 
-        // loads images from files list using index of image
-        private void ShowNextImage(int NextImage)
+        private void CheckAndResetCams()
+        {
+            int nOfCameras = 0;
+            if (CamGrab.checkCameras() != 0)
+            {
+                s.setErrMode();
+                CamGrab.destroyGrabbers();
+                Thread.Sleep(1000);
+                nOfCameras = CamGrab.getCameras();
+                imagesNotReadyCounter = 0;
+                if (nOfCameras == 3)
+                {
+                    s.setIdleMode();
+                }
+            }
+            else
+            {
+                int nRet = -1;
+                nRet = CamGrab.SetPacketSize(9000, CamGrab.m_FrontCamera);
+                nRet = nRet + CamGrab.SetPacketSize(9000, CamGrab.m_BackCamera);
+                nRet = nRet + CamGrab.SetPacketSize(9000, CamGrab.m_TopCamera);
+                if (nRet != 0)
+                {
+                    //Console.WriteLine("Error setting packet size");
+                    /*
+                    s.setErrMode();
+                    CamGrab.destroyGrabbers();
+                    Thread.Sleep(1000);
+                    nOfCameras = CamGrab.getCameras();
+                    imagesNotReadyCounter = 0;
+                    if (nOfCameras == 3)
+                    {
+                        s.setIdleMode();
+                    }*/
+                }
+            }
+        }
+
+// loads images from files list using index of image
+private void ShowNextImage(int NextImage)
         {
 
             string imageEdgesPath = "";
@@ -2248,6 +2305,7 @@ namespace Cointero
 
         public void SendResultsN(string strModelName)
         {
+            tmCueList.Clear();
             //default result: <Xon> CIy x CUR DENOMINA Tag CoinID <Xoff>
             //                <XON> CIxTagCCCDDDDDDDDxxxxx <XOFF >
             // y = A - Accept, R = Reject(or P or O - not sure what these were for) *”
@@ -2425,29 +2483,21 @@ namespace Cointero
                 textBoxFileName.Text = NameForm.GetCoinName();
                 if (NameForm.GetSaveMode())
                 {
-                    s.setSaveMode();
+                    //s.setSaveMode();
                     button5.BackColor = Color.Green;
                 }
             }
             else
             {
                 //NameForm.ClearSaveMode();
-                s.setIdleMode();
+                //s.setIdleMode();
                 button5.BackColor = Color.Gray;
             }
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-
-            if (CamGrab.checkCameras() > 0)
-            {
-
-                CamGrab.destroyGrabbers();
-                Thread.Sleep(1000);
-                CamGrab.getCameras();
-                imagesNotReadyCounter = 0;
-            }
+            CheckAndResetCams();
         }
 
         private void button6_Click(object sender, EventArgs e)
@@ -2463,6 +2513,11 @@ namespace Cointero
                 saveImgInRun = false;
 
             }
+        }
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Close camera driver
+            CamGrab.destroyGrabbers();
         }
     }
 }

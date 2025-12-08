@@ -96,10 +96,11 @@ namespace Cointero
             return saveMode;
         }
         
+        /*
         public void ClearSaveMode()
         {
             saveMode = false;
-        }
+        }*/
 
         public CoinStruc decodeCoinName(string coinName)
         {

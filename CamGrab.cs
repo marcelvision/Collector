@@ -1,18 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading ;
-using MvCamCtrl.NET;
+﻿using MvCamCtrl.NET;
 using MvCamCtrl.NET.CameraParams;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using System.Security.Cryptography.X509Certificates;
-using System.Diagnostics;
+using MvCameraControl;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading ;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 
 namespace Cointero
@@ -65,7 +66,7 @@ namespace Cointero
             IcountF++;
             string infoMessage = "ImageCallbackFuncF : frame " + pFrameInfoF.nFrameNum.ToString() + "/" + IcountF.ToString() + " Width[" + Convert.ToString(pFrameInfoF.nWidth) + "] , Height[" + Convert.ToString(pFrameInfoF.nHeight) + "] , FrameNu" + "m[" + Convert.ToString(pFrameInfoF.nFrameNum) + "]";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
-            logDr.Info(infoMessage);
+            //logDr.Info(infoMessage);
 
             // CALLBACK FRONT CAMERA
             // Create bmp from pointer
@@ -90,7 +91,7 @@ namespace Cointero
 
             infoMessage = "ImageCallbackFuncF : Front camera image acquired " + pFrameInfoF.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
-            logDr.Info(infoMessage);
+            //logDr.Info(infoMessage);
             
         }
 
@@ -100,7 +101,7 @@ namespace Cointero
             IcountB++;
             string infoMessage = "ImageCallbackFuncB : frame " + pFrameInfoB.nFrameNum.ToString() + "/" + IcountB.ToString() + " Width[" + Convert.ToString(pFrameInfoB.nWidth) + "] , Height[" + Convert.ToString(pFrameInfoB.nHeight) + "] , FrameNu" + "m[" + Convert.ToString(pFrameInfoB.nFrameNum) + "]";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
-            logDr.Info(infoMessage);
+            //logDr.Info(infoMessage);
             // CALLBACK FRONT BACK
             // Create bmp from pointer
             //
@@ -127,7 +128,7 @@ namespace Cointero
             //stopGrabbingB();
             infoMessage = "ImageCallbackFuncB : Back camera image acquired " + pFrameInfoB.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
-            logDr.Info(infoMessage);
+            //logDr.Info(infoMessage);
         }
 
         static void ImageCallbackFuncT(IntPtr pDataT, ref MV_FRAME_OUT_INFO_EX pFrameInfoT, IntPtr pUserT)      
@@ -136,7 +137,7 @@ namespace Cointero
             string datetimeFormat = "yyyy-MM-dd HH:mm:ss.fff ";
             string infoMessage = "ImageCallbackFuncT : frame " + pFrameInfoT.nFrameNum.ToString() + "/" + IcountT.ToString() + " Width[" + Convert.ToString(pFrameInfoT.nWidth) + "] , Height[" + Convert.ToString(pFrameInfoT.nHeight) + "] , FrameNu" + "m[" + Convert.ToString(pFrameInfoT.nFrameNum) + "]";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
-            logDr.Info(infoMessage);
+            // logDr.Info(infoMessage);
             // CALLBACK FRONT CAMERA
             // Create bmp from pointer
             //
@@ -159,7 +160,7 @@ namespace Cointero
 
             infoMessage = "ImageCallbackFuncT : Top camera image acquired " + pFrameInfoT.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
-            logDr.Info(infoMessage);
+            //logDr.Info(infoMessage);
 
             /*
             ColorPalette palette = m_Bitmap2ShowT.Palette;
@@ -205,6 +206,7 @@ namespace Cointero
             bitmap.UnlockBits(bitmapData);
         }
 
+        /*
         // ch:像素类型是否为Mono格式 | en:If Pixel Type is Mono 
         private static Boolean IsMono(MvGvspPixelType enPixelType)
         {
@@ -225,7 +227,7 @@ namespace Cointero
                 default:
                     return false;
             }
-        }
+        }*/
         
         public static int checkCameras()
         {
@@ -244,13 +246,16 @@ namespace Cointero
             
             if (CErrorDefine.MV_OK != (nRetFront+ nRetBack + nRetTop))
             {
-                //Console.WriteLine("Get TriggerMode failed:{0:x8}", nRet);                
+                Console.WriteLine("Get TriggerMode failed:{0:x8}", nRetTop);                
+                return (nRetFront + nRetBack + nRetTop);
             }
-            return (nRetFront + nRetBack + nRetTop);
+            else
+                return (0);
         }
         
-        public static void getCameras()
+        public static int getCameras()
         {
+            int nGrabersInitialised = 0;
             string datetimeFormat = "yyyy-MM-dd HH:mm:ss.fff ";
             do
             {
@@ -260,12 +265,13 @@ namespace Cointero
                 nRet = CSystem.EnumDevices(CSystem.MV_GIGE_DEVICE | CSystem.MV_USB_DEVICE, ref ltDeviceList);
                 if (CErrorDefine.MV_OK != nRet)
                 {
-                    Console.WriteLine("Enum device failed:{0:x8}", nRet);
+                    Console.WriteLine("Enum device failed:{0:x8}" + GetErrorString(nRet), nRet);
                     break;
                 }
+                
                 Console.WriteLine("Enum device count : " + Convert.ToString(ltDeviceList.Count));
                 if (0 == ltDeviceList.Count)
-                {
+                {               
                     break;
                 }
 
@@ -307,7 +313,7 @@ namespace Cointero
                     }
                 }
 
-                int nGrabersInitialised = 0;
+                
                 Console.WriteLine("\n Selected cameras:");
                 for  (int nDevIndex = ltDeviceList.Count -1; nDevIndex >= 0;  nDevIndex--)
                 {
@@ -368,9 +374,9 @@ namespace Cointero
                             Console.WriteLine("Set TriggerMode failed:{0:x8}", nRet);
                             break;
                         }
-
                         // en:set exposure time
                         /*
+                        SetPacketSize(9000, m_FrontCamera);
                         nRet = m_FrontCamera.SetFloatValue("ExposureTime", 100);
                         if (CErrorDefine.MV_OK != nRet)
                         {
@@ -440,7 +446,8 @@ namespace Cointero
                         }
 
                         // en:set exposure time
-                        /* 
+                        /*
+                        SetPacketSize(9000, m_BackCamera);
                         nRet = m_BackCamera.SetFloatValue("ExposureTime", 100);
                         if (CErrorDefine.MV_OK != nRet)
                         {
@@ -508,15 +515,17 @@ namespace Cointero
                             break;
                         }
 
+
                         // en:set exposure time
                         /*
+                        SetPacketSize(9000, m_TopCamera);
                         nRet = m_TopCamera.SetFloatValue("ExposureTime", 5000);
                         if (CErrorDefine.MV_OK != nRet)
                         {
                             Console.WriteLine("Set TriggerMode failed:{0:x8}", nRet);
                             break;
-                        }
-                        */
+                        }                        */
+                        
                         // ch:注册回调函数 | en:Register image callback
                         ImageCallbackT = new cbOutputExdelegate(ImageCallbackFuncT);
                         nRet = m_TopCamera.RegisterImageCallBackForRGB(ImageCallbackT, IntPtr.Zero);
@@ -542,59 +551,13 @@ namespace Cointero
                         Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + "Pixel Format " + pcPixelFormat.SupportValue.ToString() );
                         // ch:获取选择的设备信息 | en:Get selected device information
                         CCameraInfo camFDevice = ltDeviceList[nDevIndex];
+                        */
 
-                        // ch:探测网络最佳包大小(只对GigE相机有效) | en:Detection network optimal package size(It only works for the GigE camera)
-                        if (CSystem.MV_GIGE_DEVICE == camFDevice.nTLayerType)
-                        {
-                            int nPacketSize = m_FrontCamera.GIGE_GetOptimalPacketSize();
-                            if (nPacketSize > 0)
-                            {
-                                nRet = m_FrontCamera.SetIntValue("GevSCPSPacketSize", (uint)nPacketSize);
-                                if (CErrorDefine.MV_OK != nRet)
-                                {
-                                    Console.WriteLine("Warning: Set Packet Size failed {0:x8}", nRet);
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("Warning: Get Packet Size failed {0:x8}", nPacketSize);
-                            }
-                        }
-                        if (CSystem.MV_GIGE_DEVICE == camFDevice.nTLayerType)
-                        {
-                            int nPacketSize = m_BackCamera.GIGE_GetOptimalPacketSize();
-                            if (nPacketSize > 0)
-                            {
-                                nRet = m_BackCamera.SetIntValue("GevSCPSPacketSize", (uint)nPacketSize);
-                                if (CErrorDefine.MV_OK != nRet)
-                                {
-                                    Console.WriteLine("Warning: Set Packet Size failed {0:x8}", nRet);
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("Warning: Get Packet Size failed {0:x8}", nPacketSize);
-                            }
-                        }
-                        if (CSystem.MV_GIGE_DEVICE == camFDevice.nTLayerType)
-                        {
-                            int nPacketSize = m_TopCamera.GIGE_GetOptimalPacketSize();
-                            if (nPacketSize > 0)
-                            {
-                                nRet = m_TopCamera.SetIntValue("GevSCPSPacketSize", (uint)nPacketSize);
-                                if (CErrorDefine.MV_OK != nRet)
-                                {
-                                    Console.WriteLine("Warning: Set Packet Size failed {0:x8}", nRet);
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("Warning: Get Packet Size failed {0:x8}", nPacketSize);
-                            }
-                        }*/
                     }
-                    /*
+
+                    
                     // ch:探测网络最佳包大小(只对GigE相机有效) | en:Detection network optimal package size(It only works for the GigE camera)
+                    /*
                     if (CSystem.MV_GIGE_DEVICE == camFDevice.nTLayerType)
                     {
                         int nPacketSize = m_FrontCamera.GIGE_GetOptimalPacketSize();
@@ -610,39 +573,7 @@ namespace Cointero
                         {
                             Console.WriteLine("Warning: Get Packet Size failed {0:x8}", nPacketSize);
                         }
-                    }
-                    if (CSystem.MV_GIGE_DEVICE == camFDevice.nTLayerType)
-                    {
-                        int nPacketSize = m_BackCamera.GIGE_GetOptimalPacketSize();
-                        if (nPacketSize > 0)
-                        {
-                            nRet = m_BackCamera.SetIntValue("GevSCPSPacketSize", (uint)nPacketSize);
-                            if (CErrorDefine.MV_OK != nRet)
-                            {
-                                Console.WriteLine("Warning: Set Packet Size failed {0:x8}", nRet);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Warning: Get Packet Size failed {0:x8}", nPacketSize);
-                        }
-                    }
-                    if (CSystem.MV_GIGE_DEVICE == camFDevice.nTLayerType)
-                    {
-                        int nPacketSize = m_TopCamera.GIGE_GetOptimalPacketSize();
-                        if (nPacketSize > 0)
-                        {
-                            nRet = m_TopCamera.SetIntValue("GevSCPSPacketSize", (uint)nPacketSize);
-                            if (CErrorDefine.MV_OK != nRet)
-                            {
-                                Console.WriteLine("Warning: Set Packet Size failed {0:x8}", nRet);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Warning: Get Packet Size failed {0:x8}", nPacketSize);
-                        }
-                    }
+                    }                    
                     */
                 }
                 Console.WriteLine("Init Framegrabbers has finished " + nGrabersInitialised.ToString() + " grabers active");
@@ -659,8 +590,33 @@ namespace Cointero
                 }
                 
             } while (false);
-        }        
-        
+            return nGrabersInitialised;
+        }
+
+        public static int SetPacketSize(int size, CCamera m_camera)
+        {
+            // Check if camera supports packet size adjustment
+            MyCamera.MVCC_INTVALUE stParam = new MyCamera.MVCC_INTVALUE();
+            var x = m_camera.GIGE_GetOptimalPacketSize();
+            CIntValue cIntValue = new CIntValue();
+
+            int nRet = m_camera.GetIntValue("GevSCPSPacketSize", ref cIntValue);
+
+            //SetEnumValue("TriggerMode", TrigerMode);
+            //int nRet = _camera.MV_CC_GetIntValue("GevSCPSPacketSize", ref stParam);
+
+            uint packetSize = 0;
+            if (nRet == MyCamera.MV_OK && cIntValue.CurValue != size)
+            {
+                packetSize = Math.Min((uint)size, (uint)cIntValue.Max );
+                packetSize = Math.Max(packetSize, (uint)cIntValue.Min);
+
+                nRet = m_camera.SetIntValue("GevSCPSPacketSize", packetSize);
+            }
+            //Console.WriteLine("packet size : " + cIntValue.CurValue.ToString() + " max packet size : " + cIntValue.Max.ToString() + " set packet size : " + "packet size : " + packetSize.ToString());
+            return nRet;
+        }
+
         public static void stopGrabbingT()
         {
             // ch:停止抓图 | en:Stop grabbing
@@ -807,6 +763,35 @@ namespace Cointero
             m_bIsDeviceOpen = false;            
             m_bGrabbing = false;
             logDr.Info("destroyGrabbers: finished");
-        }        
+        }
+
+        private static string GetErrorString(int errorCode)
+        {
+            switch (errorCode)
+            {
+                case MyCamera.MV_E_HANDLE: return "Invalid handle";
+                case MyCamera.MV_E_SUPPORT: return "Not supported";
+                case MyCamera.MV_E_BUFOVER: return "Buffer overflow";
+                case MyCamera.MV_E_CALLORDER: return "Function call order error";
+                case MyCamera.MV_E_PARAMETER: return "Invalid parameter";
+                case MyCamera.MV_E_RESOURCE: return "Resource application failed";
+                case MyCamera.MV_E_NODATA: return "No data";
+                case MyCamera.MV_E_PRECONDITION: return "Precondition error";
+                case MyCamera.MV_E_VERSION: return "Version mismatch";
+                case MyCamera.MV_E_NOENOUGH_BUF: return "Insufficient memory";
+                case MyCamera.MV_E_UNKNOW: return "Unknown error";
+                case MyCamera.MV_E_GC_GENERIC: return "General error";
+                case MyCamera.MV_E_GC_ARGUMENT: return "Invalid argument";
+                case MyCamera.MV_E_GC_RANGE: return "Value out of range";
+                case MyCamera.MV_E_GC_PROPERTY: return "Property error";
+                case MyCamera.MV_E_GC_RUNTIME: return "Runtime error";
+                case MyCamera.MV_E_GC_LOGICAL: return "Logical error";
+                case MyCamera.MV_E_GC_ACCESS: return "Node access error";
+                case MyCamera.MV_E_GC_TIMEOUT: return "Timeout";
+                //case MyCamera.MV_E_GC_DYNCAST: return "Dynamic cast failed";
+                case MyCamera.MV_E_GC_UNKNOW: return "GenICam unknown error";
+                default: return $"Error code: {errorCode}";
+            }
+        }
     }
 }
