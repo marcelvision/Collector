@@ -1,4 +1,5 @@
-namespace Cointero
+namespace Collector
+
 {
     internal static class Program
     {

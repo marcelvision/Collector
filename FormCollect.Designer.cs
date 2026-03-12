@@ -1,4 +1,4 @@
-﻿namespace Cointero
+﻿namespace Collector
 {
     partial class FormCollect
     {

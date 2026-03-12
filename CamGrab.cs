@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
-namespace Cointero
+namespace Collector
 {
     class CamGrab
     {

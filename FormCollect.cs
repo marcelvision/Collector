@@ -1,5 +1,5 @@
 using Coinpare;
-using Cointero;
+using Collector;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using MvCamCtrl.NET;
@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Timers;
 
-namespace Cointero
+namespace Collector
 {
     public partial class FormCollect : Form, IComListener
     {
