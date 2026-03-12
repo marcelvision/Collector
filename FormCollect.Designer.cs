@@ -1,6 +1,6 @@
 ﻿namespace Cointero
 {
-    partial class FormMain
+    partial class FormCollect
     {
         /// <summary>
         ///  Required designer variable.
@@ -79,7 +79,7 @@
             textBoxCameraCounters.BackColor = SystemColors.Desktop;
             textBoxCameraCounters.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             textBoxCameraCounters.ForeColor = SystemColors.Info;
-            textBoxCameraCounters.Location = new Point(5, 549);
+            textBoxCameraCounters.Location = new Point(486, 526);
             textBoxCameraCounters.Margin = new Padding(3, 2, 3, 2);
             textBoxCameraCounters.Name = "textBoxCameraCounters";
             textBoxCameraCounters.ReadOnly = true;
@@ -93,11 +93,11 @@
             textBoxCoinName.BackColor = SystemColors.Desktop;
             textBoxCoinName.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             textBoxCoinName.ForeColor = SystemColors.Info;
-            textBoxCoinName.Location = new Point(966, 549);
+            textBoxCoinName.Location = new Point(558, 497);
             textBoxCoinName.Margin = new Padding(3, 2, 3, 2);
             textBoxCoinName.Name = "textBoxCoinName";
             textBoxCoinName.ReadOnly = true;
-            textBoxCoinName.Size = new Size(244, 25);
+            textBoxCoinName.Size = new Size(97, 25);
             textBoxCoinName.TabIndex = 4;
             textBoxCoinName.Text = "---";
             textBoxCoinName.TextAlign = HorizontalAlignment.Center;
@@ -105,10 +105,10 @@
             // buttonSetModels
             // 
             buttonSetModels.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            buttonSetModels.Location = new Point(5, 588);
+            buttonSetModels.Location = new Point(17, 588);
             buttonSetModels.Margin = new Padding(3, 2, 3, 2);
             buttonSetModels.Name = "buttonSetModels";
-            buttonSetModels.Size = new Size(76, 22);
+            buttonSetModels.Size = new Size(52, 22);
             buttonSetModels.TabIndex = 5;
             buttonSetModels.Text = "COM";
             buttonSetModels.UseVisualStyleBackColor = true;
@@ -116,10 +116,10 @@
             // button2
             // 
             button2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            button2.Location = new Point(89, 588);
+            button2.Location = new Point(101, 588);
             button2.Margin = new Padding(3, 2, 3, 2);
             button2.Name = "button2";
-            button2.Size = new Size(76, 22);
+            button2.Size = new Size(49, 22);
             button2.TabIndex = 6;
             button2.Text = "CAM";
             button2.UseVisualStyleBackColor = true;
@@ -128,10 +128,10 @@
             // button3
             // 
             button3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            button3.Location = new Point(173, 588);
+            button3.Location = new Point(185, 588);
             button3.Margin = new Padding(3, 2, 3, 2);
             button3.Name = "button3";
-            button3.Size = new Size(76, 22);
+            button3.Size = new Size(49, 22);
             button3.TabIndex = 7;
             button3.Text = "IP STAT";
             button3.UseVisualStyleBackColor = true;
@@ -139,36 +139,36 @@
             // button4
             // 
             button4.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            button4.Location = new Point(966, 588);
+            button4.Location = new Point(984, 588);
             button4.Margin = new Padding(3, 2, 3, 2);
             button4.Name = "button4";
-            button4.Size = new Size(76, 22);
+            button4.Size = new Size(48, 22);
             button4.TabIndex = 10;
-            button4.Text = "SAVE";
+            button4.Text = "AUTO";
             button4.UseVisualStyleBackColor = true;
             button4.Click += button4_Click;
             // 
             // button5
             // 
             button5.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            button5.Location = new Point(1050, 588);
+            button5.Location = new Point(1067, 588);
             button5.Margin = new Padding(3, 2, 3, 2);
             button5.Name = "button5";
-            button5.Size = new Size(76, 22);
+            button5.Size = new Size(49, 22);
             button5.TabIndex = 9;
-            button5.Text = "M.Name";
+            button5.Text = "NAME";
             button5.UseVisualStyleBackColor = true;
             button5.Click += button5_Click;
             // 
             // button6
             // 
             button6.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            button6.Location = new Point(1134, 588);
+            button6.Location = new Point(1154, 588);
             button6.Margin = new Padding(3, 2, 3, 2);
             button6.Name = "button6";
-            button6.Size = new Size(76, 22);
+            button6.Size = new Size(46, 22);
             button6.TabIndex = 8;
-            button6.Text = "X6";
+            button6.Text = "STOP";
             button6.UseVisualStyleBackColor = true;
             button6.Click += button6_Click;
             // 
@@ -208,7 +208,7 @@
             textBox3.TabIndex = 13;
             textBox3.TextAlign = HorizontalAlignment.Center;
             // 
-            // FormMain
+            // FormCollect
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -229,8 +229,8 @@
             Controls.Add(pictureBox2);
             Controls.Add(pictureBox1);
             Margin = new Padding(3, 2, 3, 2);
-            Name = "FormMain";
-            Text = "Cointero";
+            Name = "FormCollect";
+            Text = "Collector";
             Load += Main_Load;
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();

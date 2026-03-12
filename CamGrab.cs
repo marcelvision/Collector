@@ -83,11 +83,11 @@ namespace Cointero
             bmpReadyF = true;
 
             // update task manager que 
-            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            FormCollect.tmCue tmCueCom = new FormCollect.tmCue();
             tmCueCom.iDNumber = IcountF;
             tmCueCom.description = "Image"+ IcountF.ToString() + " camF received";
-            tmCueCom.tmType = FormMain.tmType.IMAGE;
-            FormMain.tmCueList.Add(tmCueCom);
+            tmCueCom.tmType = FormCollect.tmType.IMAGE;
+            FormCollect.tmCueList.Add(tmCueCom);
 
             infoMessage = "ImageCallbackFuncF : Front camera image acquired " + pFrameInfoF.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
@@ -118,11 +118,11 @@ namespace Cointero
             bmpReadyB = true;
 
             // update task manager que 
-            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            FormCollect.tmCue tmCueCom = new FormCollect.tmCue();
             tmCueCom.iDNumber = IcountB;
             tmCueCom.description = "Image" + IcountB.ToString() + " camB received";
-            tmCueCom.tmType = FormMain.tmType.IMAGE;
-            FormMain.tmCueList.Add(tmCueCom);
+            tmCueCom.tmType = FormCollect.tmType.IMAGE;
+            FormCollect.tmCueList.Add(tmCueCom);
 
             //NecessaryOperBeforeGrab();
             //stopGrabbingB();
@@ -152,11 +152,11 @@ namespace Cointero
             bmpReadyT = true;
 
             // update task manager que 
-            FormMain.tmCue tmCueCom = new FormMain.tmCue();
+            FormCollect.tmCue tmCueCom = new FormCollect.tmCue();
             tmCueCom.iDNumber = IcountT;
             tmCueCom.description = "Image" + IcountT.ToString() + " camT received";
-            tmCueCom.tmType = FormMain.tmType.IMAGE;
-            FormMain.tmCueList.Add(tmCueCom);
+            tmCueCom.tmType = FormCollect.tmType.IMAGE;
+            FormCollect.tmCueList.Add(tmCueCom);
 
             infoMessage = "ImageCallbackFuncT : Top camera image acquired " + pFrameInfoT.nFrameLen.ToString() + " B and converted";
             Console.WriteLine(DateTime.Now.ToString(datetimeFormat) + infoMessage);
