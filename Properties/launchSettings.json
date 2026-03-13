@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Cointero": {
+    "Collector": {
       "commandName": "Project",
       "nativeDebugging": true
     }
