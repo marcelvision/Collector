@@ -687,7 +687,7 @@ namespace Collector
         public static void destroyGrabbers()
         {
 
-            logDr.Info("destroyGrabbers: started");
+            //logDr.Info("destroyGrabbers: started");
             // ch:关闭设备 | en:Close device
             Console.WriteLine("Stop grabbing Front camera ");
             nRet = m_FrontCamera.StopGrabbing();
