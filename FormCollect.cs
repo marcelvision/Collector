@@ -213,13 +213,13 @@ namespace Collector
                 }
                 else
                 {
-                    MessageBox.Show("Loading image filed. Number of subdirectories does not match 3:" + workingDirPath);
+                    MessageBox.Show("Loading image failed. Number of subdirectories does not match 3:" + workingDirPath);
                     return;
                 }
             }
             else
             {
-                MessageBox.Show("Loading image filed. Main directory does not exist:" + workingDirPath);
+                MessageBox.Show("Loading image failed. Main directory does not exist:" + workingDirPath);
                 return;
             }
             WriteDebug("Check working directory: " + modelsDirPath);
@@ -231,8 +231,8 @@ namespace Collector
             }
             else
             {
-                WriteDebug("Loading model images filed. Main directory does not exist:" + modelsDirPath);
-                MessageBox.Show("Loading momdels filed. Number of subdirectories does not match 3:" + workingDirPath);
+                WriteDebug("Loading model images failed. Main directory does not exist:" + modelsDirPath);
+                MessageBox.Show("Loading momdels failed. Number of subdirectories does not match 3:" + workingDirPath);
                 return;
             }
 
@@ -988,7 +988,7 @@ private void ShowNextImage(int NextImage)
 
                 if (imageTop == null || imageSide1 == null || imageSide2 == null)
                 {
-                    MessageBox.Show("ShowNextImage: Loading image filed");
+                    MessageBox.Show("ShowNextImage: Loading image failed");
                     return;
                 }
                 else
